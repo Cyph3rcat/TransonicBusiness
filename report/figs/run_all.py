@@ -1,5 +1,5 @@
 """Regenerate every figure in report/figures/ from the source data."""
-import ch1_3, ch5_6, ch7_10, threeview
+import ch1_3, ch5_6, ch7_10, ch11, threeview
 
 if __name__ == "__main__":
     print("three-view:")
@@ -16,5 +16,8 @@ if __name__ == "__main__":
     for f in (ch7_10.fig_7_1, ch7_10.fig_8_1, ch7_10.fig_8_2, ch7_10.fig_9_1,
               ch7_10.fig_9_2, ch7_10.fig_9_3, ch7_10.fig_10_1,
               ch7_10.fig_10_2, ch7_10.fig_10_3):
+        f()
+    print("chapter 11:")
+    for f in (ch11.fig_11_1, ch11.fig_11_2, ch11.fig_11_3):
         f()
     print("done.")
