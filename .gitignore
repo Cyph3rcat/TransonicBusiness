@@ -15,7 +15,8 @@
 # --- Reference literature (not original work; kept locally only, not redistributed) ---
 *.pdf
 /lectureslides/
-/refs/lectureslides/img/
+/refs/lectureslides/
+/refs/raymer/
 
 # --- Claude Code artifacts ---
 CLAUDE.md
