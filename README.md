@@ -2,6 +2,7 @@
 
 Hi there, this is a list of all the tools I used to create the ubiquitous amt. of graphs in the report. 
 it also contains the .vsp file for the plane (which can be exported as a STEP file and CAD component by component)
+tip: to download the CAD / vsp file directly, see the Releases section on the right of the github page. 
 
 it also has the mesh that I used, as well as the gmsh script I used to mesh the file. 
 
