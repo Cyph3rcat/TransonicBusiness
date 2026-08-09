@@ -1,25 +1,4 @@
-"""Stage 1 SU2 volume mesh: wing+winglet half-model, EULER (inviscid).
-
-Pivoted from RANS/wall-function 2026-08-08 after 7 distinct, real failures
-in gmsh's 3D boundary-layer extrusion on this geometry (unit mismatch, an
-unsafe BL-thickness-vs-tip-chord ratio, a sharp winglet crease, a wrongly
-BL-extruded root cap, degenerate zero-area TE slivers at the tip, a
-mismatched split-BL seam, and finally a persistent small un-closed gap at
-the root that was never fully root-caused). Every one of those was about
-the ANISOTROPIC OFFSET SURFACE a boundary layer needs -- Euler needs no
-boundary layer at all, just a closed watertight surface and an isotropic
-tet fill, which sidesteps the entire failure family:
-  - no y+/wall spacing, no prism layers, no offset-surface self-intersection
-  - the degenerate TE slivers and the root cap are still handled explicitly
-    below (they're real STEP-export quirks, not RANS-specific), but with no
-    extrusion step there's no possibility of an offset-vs-original mismatch
-  - much smaller cell count is fine (no viscous sublayer to resolve), so
-    this is also far cheaper to solve, consistent with the earlier decision
-    to drop y+~1 for hardware reasons -- Euler sidesteps that whole
-    constraint rather than compromising around it
-
-Usage:  python3 make_mesh_euler.py [--coarse]
-"""
+"""Stage 1 SU2 volume mesh: wing+winglet half-model, EULER (inviscid). Pivoted from RANS/wall-function 2026-08-08 after 7 distinct failures in gmsh's 3D boundary-layer extrusion on this geometry (unit mismatch, an unsafe BL-thickness-vs-tip-chord ratio, a sharp winglet crease, a wrongly BL-extruded root cap, degenerate zero-area TE slivers, a mismatched split-BL seam, and a persistent unclosed root gap) -- all were about the anisotropic offset surface a boundary layer needs; Euler needs no BL at all, just a closed watertight surface and an isotropic tet fill, which sidesteps the whole failure family and is also far cheaper to solve. Usage: python3 make_mesh_euler.py [--coarse]"""
 import argparse
 import math
 import os
@@ -55,11 +34,7 @@ def build(coarse=False):
     print(f"wing bbox: {bbox}")
     xmin, ymin, zmin, xmax, ymax, zmax = bbox
 
-    # Same root-cap / degenerate-sliver identification as the RANS attempt
-    # (see make_mesh.py history) -- the root cap sits exactly at y=0, and
-    # two TE-cap slivers at the small-chord winglet tip are genuinely
-    # zero-area. No BL means there's no offset step to go wrong here, but
-    # the slivers can still choke tet meshing directly, so still drop them.
+    # same root-cap/degenerate-sliver identification as the RANS attempt (make_mesh.py) -- no BL here means no offset step can go wrong, but the zero-area TE slivers at the tip can still choke tet meshing directly, so still drop them
     root_cap, wing_surfs, degenerate = None, [], []
     for dim, tag in all_surfs:
         bb = gmsh.model.getBoundingBox(dim, tag)
@@ -74,10 +49,7 @@ def build(coarse=False):
           f"wetted wall surfaces: {len(wing_surfs)}")
 
     # ---- symmetry-plane face (y=0) with a hole where the wing root sits --
-    # No BL offset this time, so the wetted surfaces' naked root edge sits
-    # EXACTLY at y=0, matching root_cap's boundary with no gap (the RANS
-    # attempt's persistent unclosed-root-gap was specifically an offset
-    # mismatch, which doesn't exist here).
+    # no BL offset this time, so the wetted surfaces' naked root edge sits exactly at y=0, matching root_cap's boundary with no gap (the RANS attempt's persistent unclosed-root-gap was specifically an offset mismatch, which doesn't exist here)
     bnd = gmsh.model.getBoundary([root_cap], combined=True, oriented=True)
     hole_loop = gmsh.model.geo.addCurveLoop([c[1] for c in bnd])
 
@@ -108,8 +80,7 @@ def build(coarse=False):
     box_faces = [sym_face, far_face, s_bot, s_top, s_in, s_out]
     gmsh.model.geo.synchronize()
 
-    # wing_surfs are still OCC entities; box faces are geo-kernel. Both live
-    # in the same model after synchronize() and can go in one surface loop.
+    # wing_surfs are still OCC entities; box faces are geo-kernel -- both live in the same model after synchronize() and can go in one surface loop
     all_faces = [t[1] for t in wing_surfs] + box_faces
     gaps = gmsh.model.getBoundary([(2, t) for t in all_faces], combined=True,
                                    oriented=False)
@@ -127,9 +98,7 @@ def build(coarse=False):
     gmsh.model.addPhysicalGroup(2, [sym_face], name="symmetry")
     gmsh.model.addPhysicalGroup(2, box_faces[1:], name="farfield")
 
-    # Isotropic sizing only -- no y+ concern for Euler. 1-2% of local chord
-    # near the wing is standard for capturing curvature/shock resolution;
-    # coarse relaxes this and the farfield size for a quick pipeline check.
+    # isotropic sizing only -- no y+ concern for Euler; 1-2% of local chord near the wing is standard for curvature/shock resolution, coarse relaxes this and the farfield size for a quick pipeline check
     size_wing = 0.05 * scale
     size_far = 12.0 * scale
     gmsh.option.setNumber("Mesh.MeshSizeMin", size_wing)

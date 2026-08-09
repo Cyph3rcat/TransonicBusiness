@@ -1,11 +1,4 @@
-"""Painter's-algorithm shaded render of an OBJ, for eyeballing outer mould line.
-
-Usage: python shade_obj.py model.obj out.png [title]
-
-Draws 4 views (side, top, front, 3/4) as depth-sorted Lambert-shaded polygons.
-Silhouette quality matters more than realism here - this is for judging
-whether the loft "looks right", which a point cloud cannot show.
-"""
+"""Painter's-algorithm shaded render of an OBJ, for eyeballing outer mould line. Usage: python shade_obj.py model.obj out.png [title]. Draws 4 views (side, top, front, 3/4) as depth-sorted Lambert-shaded polygons -- silhouette quality matters more than realism, since this is for judging whether the loft "looks right", which a point cloud can't show."""
 import sys
 import numpy as np
 import matplotlib

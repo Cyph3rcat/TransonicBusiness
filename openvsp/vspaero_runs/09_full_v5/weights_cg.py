@@ -1,25 +1,10 @@
-"""Class-I component weight buildup and CG for full_v5.
-
-Method: Roskam Part V-style Class-I group-weight fractions for business jets
-(ASSUMPTION grade), anchored so the empty weight sums to the adopted
-W_E = 0.59 * MTOW from weight.md 2.5, with the remainder in fixed equipment
-(consistent with the premium-interior rationale for adopting 0.59).
-Engine dry weight is TCDS-grounded (FJ44-3A-24: 520 lb, engine.md).
-Component x-positions come from the full_v5 geometry.
-
-Outputs the loading table, CG for the standard loading states, and the CG
-range vs MAC. MAC geometry: MAC=5.024 ft, x_LEMAC=21.61 (from the wing
-planform: cr 6.9086, ct 2.418, semispan 20.766, LE sweep tan 0.2996,
-root LE x=19.0).
-"""
+"""Class-I weight buildup + CG for full_v5: Roskam group-weight fractions (ASSUMPTION grade) anchored to W_E=0.59*MTOW (weight.md 2.5), engine dry weight TCDS-grounded (FJ44-3A-24 520 lb), MAC=5.024 ft / x_LEMAC=21.61 from the wing planform (cr 6.9086, ct 2.418, semispan 20.766, LE sweep tan 0.2996, root LE x=19.0)."""
 MTOW = 11660.0
 WE_FRAC = 0.59
-W_E = WE_FRAC * MTOW          # 6879
-W_FUEL = 0.2634 * MTOW        # 3071 (weight.md 2.4)
+W_E = WE_FRAC * MTOW
+W_FUEL = 0.2634 * MTOW        # weight.md 2.4
 MAC = 5.024
-# Wing-group shift: first pass (wing root LE at 19.0) put MTOW CG at -2% MAC.
-# Solving W-balance for MTOW CG = 28% MAC gives root LE = 15.9 (see notes);
-# wing, fuel, main gear, nacelles, engines all ride with the wing.
+# DX shifts the wing-riding group (wing/fuel/gear/nacelles/engines) aft to put MTOW CG at 28% MAC (root LE 19.0 gave -2% MAC; solving W-balance gives 15.9)
 DX = -3.1
 X_LEMAC = 21.61 + DX
 

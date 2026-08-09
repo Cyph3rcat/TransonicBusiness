@@ -1,42 +1,4 @@
-"""Stage 1 SU2 volume mesh: wing+winglet half-model, wall-function RANS.
-
-v3: real 3D prism boundary layer via gmsh.model.geo.extrudeBoundaryLayer(),
-following gmsh's own official example (naca_boundary_layer_3d.py, shipped
-with the gmsh pip package under share/doc/gmsh/examples/api/). Two earlier
-attempts failed and are why this one looks the way it does:
-
-  v1 (raw STEP -> OCC solid -> boolean-cut a farfield sphere): OpenVSP's STEP
-     export is an open shell at the wing ROOT (by design -- Sym_Planar_Flag
-     is off so there's no fuselage to blend into, the root cross-section is
-     just... open, meant to sit flush on a symmetry plane). OCC's boolean
-     cut needs a closed solid operand; healShapes(makeSolids=True) could not
-     close it. Boolean cut failed every time ("BOPAlgo_AlertTooFewArguments").
-
-  v2 (OpenVSP's own CFD Mesh tool -> classifySurfaces -> field-based
-     BoundaryLayer): the CFD Mesh tool DID produce a clean watertight
-     half-model triangle soup (wing + symmetry cap + farfield box, no
-     boolean needed) -- that half is solid. But gmsh 4.15.2's
-     mesh.field "BoundaryLayer" type only accepts NodesList/EdgesList
-     (verified by probing every option name it supports) -- it is a 2D
-     curve-extrusion field, not a 3D surface one, in this build. There is no
-     way to hand it the wing's *surfaces*.
-
-v3 uses gmsh's dedicated (non-Field) 3D boundary-layer API instead:
-extrudeBoundaryLayer() extrudes prism layers directly off a list of
-surfaces. It doesn't need a closed solid to start from (works on the STEP
-import's open shell directly) and doesn't touch the Field system at all.
-The official example handles exactly our topology -- a wing-like body open
-only where it meets a symmetry plane -- by extruding the BL, then using the
-boundary curve of the BL stack's outer ("top") surface as a hole cut into a
-flat symmetry-plane face. No boolean anywhere in this script.
-
-Wall spacing: y+~30-100 (wall-function RANS), not the y+~1 cfdinstructions.md
-literally asked for -- decided 2026-08-07 against the 7.6GB-RAM/no-MPI WSL
-box, which can't hold the ~40-45 layers y+~1 needs (see stage1 planning
-notes). y+~30-100 needs ~16 layers instead.
-
-Usage:  python3 make_mesh.py [--coarse]
-"""
+"""Stage 1 SU2 volume mesh: wing+winglet half-model, wall-function RANS, using gmsh's 3D boundary-layer extrudeBoundaryLayer() API (v3) -- v1 (STEP->OCC boolean-cut a farfield sphere) failed because OpenVSP's STEP export leaves an open shell at the wing root and OCC's boolean cut needs a closed solid; v2 (OpenVSP's own CFD Mesh tool, watertight) failed because gmsh 4.15.2's BoundaryLayer field only accepts NodesList/EdgesList, not 3D surfaces. Wall spacing targets y+~30-100, not the y+~1 cfdinstructions.md asks for, since the 7.6GB-RAM/no-MPI WSL box can't hold the ~40-45 layers y+~1 would need. Usage: python3 make_mesh.py [--coarse]"""
 import argparse
 import math
 import os
@@ -60,27 +22,14 @@ Y1 = YPLUS_TARGET * NU / U_TAU                       # first prism layer height,
 GROWTH = 1.20
 N_LAYERS = 8
 
-# Winglet tip chord is 0.95 ft (12%-thick section -> ~0.114 ft physical
-# thickness there), far smaller than the 5.0236 ft MAC the y+ spacing above
-# was sized against. A BL stack sized for the root chord's scale, applied
-# uniformly (extrudeBoundaryLayer only takes one height list for every input
-# surface), swallows most of the winglet tip's own cross-section and folds
-# over itself -- this, not TE sharpness, is what actually caused the first
-# "PLC Error: segment and facet intersect" failure (confirmed: 8 layers @
-# growth 1.2 sums to ~6.3mm total, <20% of the tip's ~35mm thickness, vs the
-# original 16 layers @ 1.25 summing to ~35-50mm -- comparable to the tip
-# thickness itself).
+# winglet tip chord (0.95 ft, ~0.114 ft thick) is far smaller than the 5.0236 ft MAC the y+ spacing was sized against -- a uniform BL stack sized for the root swallows the tip's cross-section and folds over itself; this, not TE sharpness, caused the first "PLC Error: segment and facet intersect" failure (8 layers @1.2 ~6.3mm vs the original 16 layers @1.25 ~35-50mm, comparable to the tip's own ~35mm thickness)
 
 FAR = 150.0    # ft, half-extent of the box beyond the wing's own bbox
 
 
 def build(coarse=False):
     scale = 2.5 if coarse else 1.0
-    # BL geometry (y1, layer count) is NOT scaled by `coarse` -- it's already
-    # sized against the smallest feature on the wing (the winglet tip chord),
-    # so making it coarser here would reopen the tip self-intersection this
-    # sizing was chosen to avoid. `coarse` only relaxes surface/farfield
-    # tessellation, below.
+    # BL geometry (y1, layer count) is NOT scaled by `coarse` -- it's sized against the winglet tip chord already, so coarsening it would reopen the tip self-intersection; `coarse` only relaxes surface/farfield tessellation
     n_layers = N_LAYERS - (2 if coarse else 0)
     y1 = Y1
 
@@ -107,27 +56,7 @@ def build(coarse=False):
         raise RuntimeError(f"wing root not at y=0 (ymin={ymin}) -- the "
                             "symmetry-plane hole logic below assumes it is")
 
-    # The STEP import already contains the wing's OWN flat root-cap patch,
-    # sitting exactly at y=0 (found by inspection: one surface has a y
-    # bounding box of (0,0) while every other surface spans a real y range).
-    # Boundary-layer-extruding THAT cap too (my first three attempts did)
-    # is nonsensical -- there's no flow normal to a symmetry-plane cap -- and
-    # is what actually produced a small, thickness- and crease-independent
-    # self-intersection every time, since offsetting a degenerate flat cap
-    # by a surface normal is ill-conditioned. Fix: exclude it from the BL
-    # extrusion and use its own (already exactly planar) boundary curve
-    # directly for the symmetry-plane hole -- the wetted surfaces' naked
-    # root edge, left un-extruded, still matches it exactly.
-    # Same failure family as this project's earlier belly-fairing width-sliver
-    # bug (doubts.md #20/#22): the airfoil's small existing TE gap (~0.55%
-    # chord), interpolated down to the 0.95 ft winglet tip chord and further
-    # split across the 4-station crease blend, produces genuinely
-    # zero-area sliver TE-cap patches at the tip (found by inspection:
-    # gmsh.model.occ.getMass reports 0.00000 ft^2 for two of the 21
-    # surfaces, exactly at HXT's reported intersection point). A
-    # boundary-layer offset of a zero-area surface has no defined normal --
-    # exclude any surface with area < 1e-3 ft^2 from the BL extrusion, same
-    # treatment as the root cap.
+    # STEP import includes the wing's own flat y=0 root-cap patch; BL-extruding it is nonsensical (no flow normal to a symmetry cap) and was what produced small crease-independent self-intersections every time, so it's excluded here and its own planar boundary curve is used directly for the symmetry-plane hole (the wetted surfaces' naked root edge, left un-extruded, still matches it exactly). Same failure family as the belly-fairing sliver bug (doubts.md #20/#22): interpolating the airfoil's ~0.55% chord TE gap down to the 0.95 ft winglet tip produces genuine zero-area sliver TE-cap surfaces (area<1e-3 ft^2, confirmed via gmsh.model.occ.getMass), which get the same BL-extrusion exclusion since a zero-area surface has no defined normal
     root_cap, wing_surfs, degenerate = None, [], []
     for dim, tag in all_surfs:
         bb = gmsh.model.getBoundingBox(dim, tag)
@@ -149,26 +78,7 @@ def build(coarse=False):
     print(f"y1 (y+={YPLUS_TARGET:.0f}) = {y1:.3e} ft = {y1*304.8:.4f} mm")
     print(f"n_layers={n_layers}  growth={GROWTH}")
 
-    # HXT pinpointed the intersection to (10.49, 22.10, 1.91) -- right at
-    # the winglet's outermost sub-panel (chord tapers to 0.95 ft there,
-    # smallest on the whole wing). The full-thickness BL stack (~1.5-5mm)
-    # is comparable to that panel's own physical TE thickness -- an offset
-    # surface pinching shut on itself, same mechanism as the earlier crease
-    # failure, just from small local scale instead of a sharp angle.
-    #
-    # Tried and rejected: (a) uniform TE blunting -- matching the BL stack's
-    # absolute size at this chord needs a ~5-6% chord TE gap there, which at
-    # the root's 6.9 ft chord would be a 0.35+ ft blunt TE, a real shape
-    # change, not a meshing tweak; (b) splitting into a thin-BL group for
-    # just the tip panel -- extrudeBoundaryLayer'd separately, its side
-    # walls don't reconcile with the neighbouring full-thickness group at
-    # their shared seam ("Could not find extruded node" at that same point).
-    #
-    # Settled on: one UNIFORM, thinner stack for the whole wing, sized off
-    # the tip's constraint instead of the root's. y+ at the root drops from
-    # the ~30 target to ~7.5 -- inside the buffer layer rather than the
-    # log-law region, a real accuracy cost for the production mesh, but
-    # avoids every failure mode above and is fine for this validation pass.
+    # HXT pinpointed the intersection at (10.49, 22.10, 1.91), the winglet's outermost sub-panel (chord tapers to 0.95 ft there), where the full-thickness BL stack (~1.5-5mm) is comparable to the panel's own TE thickness. Tried and rejected: uniform TE blunting (needs a 0.35+ ft blunt TE at the root's 6.9 ft chord, a real shape change) and a separate thin-BL group for just the tip panel (side walls didn't reconcile with the full-thickness group at the shared seam). Settled on one uniform thinner stack sized off the tip instead of the root -- root y+ drops from the ~30 target to ~7.5 (inside the buffer layer, a real accuracy cost) but avoids every failure mode above and is fine for this validation pass.
     y1 = y1 / 4.0
     d = [y1]
     for i in range(1, n_layers):
@@ -178,20 +88,7 @@ def build(coarse=False):
     extbl = gmsh.model.geo.extrudeBoundaryLayer(
         wing_surfs, [1] * n_layers, d, True)
     gmsh.model.geo.synchronize()
-    # extrudeBoundaryLayer returns, per input surface, a run of entities
-    # ending in its dim=3 volume; the dim=2 entry right before the volume is
-    # that surface's outer ("top") cap, already collected below. The OTHER
-    # dim=2 entries in each run are the prism stack's vertical side walls.
-    # Most of those sit at internal seams shared between adjacent wing
-    # panels and must stay internal (excluding them from the outer boundary
-    # is correct). But the panels touching the naked ROOT edge (y=0) also
-    # get a side wall there -- and THAT one has to be included, or the
-    # outer skin (offset away from y=0 by the BL thickness) leaves an
-    # un-closed sliver ring against the symmetry-plane hole cut from
-    # root_cap's un-offset boundary. Found via an explicit leftover-naked-
-    # edge check on the full assembly (8 small gap curves, all near the
-    # root) after the first version of this script only ever collected
-    # "top" and dropped every side wall unconditionally.
+    # extrudeBoundaryLayer returns each input surface's prism-stack entities ending in its dim=3 volume; the dim=2 entry just before it is the outer "top" cap (collected below), the rest are internal side walls at shared seams -- except the side walls at the naked y=0 root edge, which must also be kept or the offset outer skin leaves an unclosed sliver ring against the symmetry-plane hole (found via 8 leftover gap curves near the root when the first version only ever kept "top")
     top, root_sides = [], []
     for i in range(1, len(extbl)):
         if extbl[i][0] == 3:
@@ -207,10 +104,7 @@ def build(coarse=False):
     top = top + root_sides
 
     # ---- symmetry-plane face (y=0) with a hole where the wing root sits --
-    # Use the root cap's OWN boundary (guaranteed exactly planar, since it's
-    # a real flat OCC face) rather than the BL top surfaces' boundary --
-    # the wetted surfaces were never extruded at their naked root edge, so
-    # it still lines up with this curve exactly.
+    # use the root cap's own boundary (guaranteed planar) rather than the BL top surfaces' boundary -- the wetted surfaces were never extruded at their naked root edge, so it still lines up exactly
     bnd = gmsh.model.getBoundary([root_cap], combined=True, oriented=True)
     hole_loop = gmsh.model.geo.addCurveLoop([c[1] for c in bnd])
 
@@ -264,10 +158,7 @@ def build(coarse=False):
     gmsh.model.geo.mesh.setSize([(0, p) for p in (p1, p2, p3, p4, p5, p6, p7, p8)],
                                  size_far)
     gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 1)
-    # HXT (10), not plain Delaunay (1) -- gmsh's own official 3D wing
-    # boundary-layer example (naca_boundary_layer_3d.py) uses HXT
-    # specifically; it's the more robust fill algorithm for reconciling a
-    # sub-mm near-wall mesh against a 10s-of-ft farfield in one pass.
+    # HXT (10), not plain Delaunay (1) -- gmsh's own naca_boundary_layer_3d.py example uses HXT, the more robust fill for reconciling a sub-mm near-wall mesh against a 10s-of-ft farfield in one pass
     gmsh.option.setNumber("Mesh.Algorithm3D", 10)
     gmsh.option.setNumber("Mesh.Optimize", 1)
     gmsh.option.setNumber("Mesh.OptimizeNetgen", 1)

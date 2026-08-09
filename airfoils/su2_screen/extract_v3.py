@@ -1,19 +1,4 @@
-"""
-Constant-CL extraction of M_crit / M_dd from the v3 sweep (24 runs: 8 Mach
-stations x 3 AoA, JST, cold starts, windowed CD/CL statistics).
-
-Per Mach station: linearly interpolate CD, CD_std, and Cp_min to the design
-CL = 0.248 between the two bracketing AoA runs. Then:
-  - M_crit: first crossing of the constant-CL Cp_min(M) curve with the
-    isentropic critical Cp_cr(M) curve.
-  - M_dd, two independent standard definitions (agreement = defensibility):
-      (a) "Boeing criterion": dCD/dM >= 0.10 on the constant-CL curve.
-      (b) delta-CD criterion: CD rises 20 counts above the subcritical
-          baseline (mean of the M <= 0.70 stations).
-Both are evaluated on a monotone piecewise-linear interpolation of the
-station values; error bars come from the windowed std of each run,
-interpolated the same way as the means.
-"""
+"""Constant-CL extraction of M_crit/M_dd from the v3 sweep (24 runs: 8 Mach x 3 AoA) -- interpolates CD/Cp_min to CL=0.248 per Mach station, then finds M_crit (Cp crossing) and M_dd via two independent definitions (Boeing dCd/dM>=0.10; +20-count delta) so agreement between them is the defense."""
 import csv
 import json
 import sys
@@ -46,8 +31,7 @@ def cp_min_from_surface_csv(path: Path, p_inf: float, rho_inf: float, v_inf: flo
 
 
 def interp_at_cl(runs, key):
-    """Linear interpolation of runs[i][key] to CL_TARGET using cl_mean as the
-    abscissa. Picks the bracketing pair; falls back to the nearest two."""
+    """Linear interpolation of runs[i][key] to CL_TARGET using cl_mean as the abscissa; falls back to the nearest two points if CL_TARGET is outside the bracket."""
     pts = sorted(runs, key=lambda r: r["cl_mean"])
     lo, hi = None, None
     for a, b in zip(pts, pts[1:]):
@@ -97,13 +81,10 @@ def main():
     cds = [s["cd"] for s in stations]
     cp_mins = [s["cp_min"] for s in stations]
 
-    # M_crit: Cp_min crosses Cp_cr. find_crossing wants res = value - threshold
-    # to start positive and go negative: cp_min - cp_cr is positive while still
-    # subcritical (cp_min less negative than cp_cr) and negative once critical.
+    # find_crossing needs res=value-threshold to start positive and go negative; cp_min-cp_cr does that (positive while subcritical, negative once critical)
     m_crit = find_crossing(machs, cp_mins, [cp_critical(m) for m in machs])
 
-    # M_dd (a): Boeing dCD/dM >= 0.10 -- slope on successive intervals, linear
-    # interpolation in slope to the threshold inside the first qualifying interval
+    # M_dd (a): Boeing dCD/dM>=0.10, linearly interpolated in slope to the threshold within the first qualifying interval
     m_dd_boeing = None
     slopes = [(cds[i + 1] - cds[i]) / (machs[i + 1] - machs[i]) for i in range(len(machs) - 1)]
     for i, s in enumerate(slopes):

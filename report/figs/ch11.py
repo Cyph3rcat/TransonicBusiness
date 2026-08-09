@@ -1,8 +1,4 @@
-"""Figure for Chapter 11: pricing and economics.
-
-Numeric inputs come from report/economics.json, written by report/economics.py,
-so these figures cannot drift from the tables in the text.
-"""
+"""Figure for Chapter 11: pricing and economics, built from report/economics.json so it cannot drift from the tables in the text."""
 import json
 import os
 
@@ -14,8 +10,7 @@ from common import (use_style as _use_style, save, title, REPORT,
                     INK, INK2, MUTED, CRITICAL, GOOD)
 
 
-# Every label in this chapter is a dollar figure. Mathtext would swallow the
-# "$...$" pairs, so parsing is off for the whole module.
+# Every label here is a dollar figure; mathtext would swallow the "$...$" pairs, so parsing is off for the whole module.
 def use_style():
     _use_style()
     plt.rcParams["text.parse_math"] = False
@@ -30,8 +25,7 @@ def _json(name):
 def fig_11_1():
     e = _json("economics.json")
     use_style()
-    # (name, MTOW, price $M, label offset in points) -- the offsets keep the
-    # CJ4 label off the trend line it sits almost exactly on.
+    # (name, MTOW, price $M, label offset in points) -- offsets keep the CJ4 label off the trend line it sits almost on.
     COMP = [("HondaJet Elite II", 11100.0, 5.5, (0, -32)),
             ("Phenom 300E", 18387.0, 10.5, (0, -32)),
             ("Citation CJ4 Gen3", 17110.0, 12.0, (0, 14))]

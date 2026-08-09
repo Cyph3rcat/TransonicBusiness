@@ -1,19 +1,4 @@
-"""
-Creative monitor #2: a live-updating matplotlib window showing the actual
-residual/CD convergence history of whichever Mach point is currently
-running, refreshed every few seconds while the SU2 sweep runs in WSL.
-
-This is the same kind of plot you'd want anyway to sanity-check convergence
-(rms_rho flattening out, CD settling) -- watching it live instead of only
-reading it after the fact from the finished log.
-
-Runs on the WINDOWS side (uses matplotlib already confirmed installed there)
-and reads the WSL log file straight off the \\\\wsl.localhost UNC path Windows
-exposes for WSL2 distros -- no need to shell into WSL yourself.
-
-Run (from Windows, e.g. via the project's Python):
-    python live_plot_convergence.py
-"""
+"""Live-updating matplotlib view of the currently-running SU2 Mach point's convergence, read straight off the \\\\wsl.localhost UNC path so this runs on Windows without shelling into WSL."""
 import re
 import time
 from pathlib import Path

@@ -1,26 +1,4 @@
-"""Drag-divergence curve at CONSTANT lift -- the honest version.
-
-Why not just sweep Mach at fixed AoA: an aircraft in cruise holds lift
-(weight) constant and lets angle of attack fall as it speeds up. A fixed-AoA
-sweep instead lets CL climb with Mach (0.42 -> 0.66 in the first attempt),
-and since wave drag is strongly CL-dependent, that manufactures a drag rise
-that has as much to do with the lift climbing as with the Mach number. It
-put apparent drag divergence at ~M0.74 and made the wing look far worse than
-it is.
-
-So at each Mach: run three angles bracketing the cruise lift, fit the polar
-CD = CD0 + k*CL^2, and read drag off at CL = 0.360 (MTOW at FL410, M0.80 --
-derivation in aoa_finder.py). That also yields CD0(M) and span efficiency
-e(M) as a free by-product, which is what actually shows WHERE the drag rise
-comes from: CD0 climbing is wave drag, k climbing is the shock interfering
-with the lift distribution.
-
-SU2's own FIXED_CL_MODE would do this directly but is documented unstable on
-this build (su2_screen/ENVIRONMENT.md: never engaged an AoA update in 3
-pilot attempts), hence bracketing by hand.
-
-Usage:  python3 dragrise_fixedcl.py
-"""
+"""Drag-divergence at CONSTANT lift, the honest version: a fixed-AoA Mach sweep instead lets CL climb with Mach (0.42->0.66), and since wave drag is CL-dependent that manufactures apparent drag divergence at ~M0.74 that's really the lift climbing; instead brackets 3 angles per Mach around CL=0.360 (MTOW/FL410/M0.80, aoa_finder.py) and fits CD=CD0+k*CL^2, so CD0(M) and e(M) show whether the rise is wave drag (CD0) or shock-distorted lift distribution (k). SU2's FIXED_CL_MODE would do this directly but never engaged an AoA update in 3 pilot attempts (su2_screen/ENVIRONMENT.md), hence bracketing by hand. Usage: python3 dragrise_fixedcl.py"""
 import csv
 import json
 import math
@@ -43,15 +21,7 @@ MACHS = [0.80, 0.78, 0.82, 0.75, 0.85, 0.70]
 SLOPE_080, ICEPT_080 = 0.16075, 0.01258
 BETA_080 = math.sqrt(1.0 - 0.80 ** 2)
 
-# M0.80 originally reused aoa_finder.py's 1.0/1.5/2.0 deg points. That was a
-# false economy: those angles top out at CL=0.334, BELOW the CL=0.360 target,
-# so the design point -- the single most important number here -- came out
-# EXTRAPOLATED while every other Mach was interpolated. It also fitted a
-# different CL range than its neighbours, which is why CD0 came out
-# non-monotonic across Mach (14.3 -> 24.2 -> 13.1 counts, physically
-# impossible). M0.80 now gets the same bracket_angles() treatment as
-# everything else; the old points remain on disk and analyze_dragrise.py
-# still picks them up as extra samples.
+# M0.80 originally reused aoa_finder.py's 1.0/1.5/2.0 deg points, which topped out at CL=0.334 (below the 0.360 target) so the design point came out EXTRAPOLATED with non-monotonic CD0 across Mach (14.3->24.2->13.1 counts); M0.80 now gets the same bracket_angles() treatment, old points remain on disk as extra samples for analyze_dragrise.py
 
 
 def read_final(tag):
@@ -62,8 +32,7 @@ def read_final(tag):
 
 
 def bracket_angles(mach):
-    """Prandtl-Glauert-scale the M0.80 lift curve to guess the cruise angle,
-    then bracket it. Only a starting guess -- the polar fit is what decides."""
+    """Prandtl-Glauert-scale the M0.80 lift curve to guess the cruise angle, then bracket it -- only a starting guess, the polar fit decides."""
     beta = math.sqrt(1.0 - mach ** 2)
     slope = SLOPE_080 * BETA_080 / beta
     icept = ICEPT_080 * BETA_080 / beta
@@ -95,9 +64,7 @@ def main():
 
         for aoa in bracket_angles(mach):
             tag = f"cl_a{aoa:.2f}".replace(".", "p") + f"_{mtag}"
-            # Resumable: this loop has already been killed once mid-campaign
-            # (harness stopped the wrapper). Skip anything already solved so
-            # a re-run fills gaps instead of repeating ~40 min of work.
+            # resumable: this loop was killed once mid-campaign already, so skip anything already solved instead of repeating ~40 min of work
             if os.path.exists(os.path.join(HERE, f"history_{tag}.csv")):
                 cl, cd, cmz = read_final(tag)
                 print(f"  [have] M{mach} AoA={aoa}  CL={cl:.4f} "

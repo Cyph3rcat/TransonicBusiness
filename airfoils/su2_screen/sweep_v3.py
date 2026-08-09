@@ -1,41 +1,4 @@
-"""
-v3 Mach sweep for SC(2)-0412 -- designed for a DEFENSIBLE M_crit / M_dd, fixing
-the diagnosed failure modes of both prior attempts:
-
-v1 failure: under-converged limit-cycle sampling. CD at subcritical Mach came
-out 272/52/233 counts across M=0.59-0.65 where a clean solution is ~80-95
-counts (proved by v2's own first cold-start point: 84.6 counts at M=0.5922).
-Snapshotting an oscillating solve at whatever iteration the loop ended is not
-a measurement.
-
-v2 failure: RESTART_SOL warm-start chaining through this regime made the
-operating point path-dependent -- CL decayed monotonically 0.244 -> 0.033
-across the sweep at the same per-point AoA schedule v1 ran, so the curve no
-longer represents the design condition at all.
-
-v3 changes (each maps to a specific diagnosed cause):
-1. JST central scheme (SU2's standard robust choice for transonic airfoil
-   RANS) instead of ROE + MUSCL + Venkatakrishnan limiter -- limiter switching
-   on a marginal mesh is a classic driver of exactly the residual limit cycle
-   observed (rms_rho pinned at -3.0/-3.1 from iter 500 onward, CD cycling).
-2. NO warm-start chaining. Every run is an independent cold start (v1/original
-   -screen methodology, which v2's own clean early points validate).
-3. No early-exit convergence gamble: fixed ITER=5000 every run, and CD/CL are
-   reported as MEAN +/- STD over the last 1500 iterations (windowed statistics
-   via HISTORY_OUTPUT=AERO_COEFF), not a single end-point sample. If a run
-   still oscillates, the oscillation shows up honestly as an error bar.
-4. Constant-CL curve done properly: 3 AoA per Mach point bracketing the
-   CL=0.248 target, then CD/Cp_min interpolated to CL=0.248 in
-   post-processing. No FIXED_CL_MODE (already proven unstable here 3x).
-5. Mach range extended THROUGH cruise: 8 points, 0.60 -> 0.80, spacing tighter
-   around the expected knee -- so the drag rise is resolved on both sides
-   instead of the sweep ending right where it gets interesting.
-6. CFL 4.0 (adapt to 50) with implicit Euler -- appropriate for JST implicit;
-   the old CFL 1.5-20 with ROE never pushed residuals past -3.1.
-
-Run from the mach_sweep_v3 working directory (needs sc20412.su2):
-    python3 sweep_v3.py
-"""
+"""v3 Mach sweep for SC(2)-0412: JST scheme, no warm-start chaining, fixed ITER=5000 with windowed CL/CD stats, and a 3-AoA-per-Mach bracket for a true constant-CL curve -- fixes v1's under-converged snapshot sampling and v2's RESTART_SOL path-dependence (CL decayed 0.244->0.033)."""
 import csv
 import json
 import math
@@ -52,12 +15,11 @@ CL_TARGET = 0.248
 A0_DEG = (2 * math.pi) / 57.29578
 
 MACHS = [0.60, 0.64, 0.67, 0.70, 0.72, 0.74, 0.77, 0.80]
-ALPHA_OFFSETS = [0.0, 0.8, 1.6]  # deg, relative to PG-corrected guess; biased
-# upward because v1 consistently UNDERSHOT the CL target (0.16-0.21 vs 0.248)
-# at offset 0, so the bracket needs to reach higher CL, not lower.
+ALPHA_OFFSETS = [0.0, 0.8, 1.6]  # deg; biased upward since v1 undershot the CL target (0.16-0.21 vs 0.248) at offset 0
 ITER_BUDGET = 5000
 AVG_WINDOW = 1500  # iterations averaged for reported CL/CD stats
 
+# JST (not ROE+MUSCL+Venkatakrishnan): limiter switching on this marginal mesh was a likely driver of the v1/v2 residual limit-cycle; CFL 4.0 (adapt to 50) suits JST-implicit
 TEMPLATE = """\
 SOLVER= RANS
 KIND_TURB_MODEL= SST
@@ -132,8 +94,7 @@ def aoa_guess(m: float, alpha_incomp: float) -> float:
 
 
 def window_stats(history_path: Path):
-    """Mean/std of CL, CD and final rms_rho over the last AVG_WINDOW iterations,
-    from the SU2 history CSV (column names arrive quoted and space-padded)."""
+    """Mean/std of CL/CD and final rms_rho over the last AVG_WINDOW iterations from the SU2 history CSV (column names arrive quoted/space-padded)."""
     with open(history_path) as f:
         reader = csv.reader(f)
         header = [h.strip().strip('"') for h in next(reader)]

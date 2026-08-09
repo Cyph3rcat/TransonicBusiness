@@ -1,37 +1,4 @@
-"""Coupled empennage-sizing / CG solve for full_v6.
-
-Why this exists
----------------
-full_v5 moved the wing 3.1 ft forward to fix the CG (weight.md 3), which
-lengthened BOTH tail arms by 3.1 ft -- but neither tail was re-sized against the
-new arm. Recomputed at the true arms the v5 model sits at c_HT = 1.34 and
-c_VT = 0.1225, against Sadraey Table 6.4 / Raymer Table 6.4 jet-transport values
-of 1.1 / 0.09. That is doubts.md 23's over-stability (SM = 37.7% MAC).
-
-The loop closes because tail area -> tail weight -> CG -> wing position -> tail
-arm -> tail area, so the two sizing steps cannot be done independently.
-
-Two sizing modes are reported side by side, because they disagree and the
-disagreement is the finding:
-
-  historical  -- S from the tail volume coefficient (Sadraey Eq. 6.72 / 6.73,
-                 Raymer Eq. 6.28 / 6.29). This is what the course teaches.
-  requirement -- S from a target static margin, using dNP/dS_HT measured on the
-                 VSPAERO parametric sweep. Used because neither textbook has a
-                 light-business-jet row: applying the nearest class (jet
-                 transport, 46,000+ lb) to an 11,660 lb aircraft over-sizes the
-                 tail, which is exactly what the v5 VLM result shows.
-
-Geometry conventions follow Sadraey Eqs. (6.77)-(6.80) for the tail planforms
-and Raymer's arm definition (tail quarter-MAC to wing quarter-MAC). Both are
-reproduced in refs/lectureslides/week7_3.md and refs/raymer/ch06_initial_sizing.md.
-
-Usage:
-    python size_tails.py                 # historical sizing + CG convergence
-    python size_tails.py --np A,B        # add requirement-driven sizing, where
-                                         # x_np = A + B*S_HT (ft, from the
-                                         # measured parametric fit)
-"""
+"""Coupled empennage-sizing/CG solve for full_v6: v5 moved the wing 3.1 ft forward for CG (weight.md 3), lengthening both tail arms without re-sizing the tails, leaving c_HT=1.34/c_VT=0.1225 vs Sadraey/Raymer's 1.1/0.09 and doubts.md 23's over-stability (SM=37.7% MAC); solved as a fixed-point loop (tail area -> tail weight -> CG -> wing position -> tail arm -> tail area) in two modes that disagree on purpose -- historical (textbook volume coefficient, no light-jet row so it over-sizes) vs requirement (target SM from the measured dNP/dS_HT sweep). Usage: python size_tails.py [--np A,B]"""
 import argparse
 import math
 
@@ -40,13 +7,9 @@ S_W = 193.678          # ft^2, trapezoidal reference (config.md B.2)
 B_W = 41.5324          # ft
 CR_W, CT_W = 6.9086, 2.4180
 SEMISPAN_W = 20.7662
-SWEEP25_W = 18.5       # deg, quarter chord (config.md B.1, 2026-08-07 margin bump:
-                       # 13.8 deg zero-margin -> 18.5 deg for a ~0.02 Mach buffer)
+SWEEP25_W = 18.5       # deg, quarter chord (config.md B.1, 2026-08-07 bump from 13.8 deg zero-margin for a ~0.02 Mach buffer)
 
-# ------------------------------------------------- empennage shape (Raymer 4.3)
-# Areas are the free variables; AR and taper are held because the v5 values are
-# already inside Raymer Table 4.3 (HT: AR 3-5, taper 0.3-0.6; T-tail VT: AR
-# 0.7-1.2, taper 0.6-1.0), so there is no reason to move them.
+# empennage shape (Raymer 4.3): areas are the free variables; AR/taper held fixed since v5's values already sit inside Raymer Table 4.3 ranges (HT AR 3-5 taper 0.3-0.6; VT AR 0.7-1.2 taper 0.6-1.0)
 AR_HT, TAPER_HT, SWEEP25_HT = 4.4706, 0.4783, 20.0
 AR_VT, TAPER_VT, SWEEP25_VT = 1.0659, 0.6052, 35.0
 X_VT_ROOT, Z_VT_ROOT = 31.6, 2.0       # fin root LE, fixed to the tail cone
@@ -58,19 +21,13 @@ W_FUEL = 0.2634 * MTOW
 S_HT_REF, S_VT_REF = 51.68, 59.0       # areas the v5 weight fractions refer to
 X_WING_REF = 19.0                      # root LE the v5 group arms were tabulated at
 
-# Volume coefficients. Sadraey Table 6.4 jet transport = 1.1 / 0.09;
-# Raymer Table 6.4 jet transport = 1.00 / 0.09, with a T-tail credit of -5% on
-# each (Raymer Ch.6: end-plate effect on the fin, clean air on the horizontal).
+# volume coefficients: Sadraey Table 6.4 jet transport = 1.1/0.09; Raymer Table 6.4 = 1.00/0.09 with a -5% T-tail credit each (Raymer Ch.6: fin end-plate effect, clean air on the horizontal)
 CHT_SADRAEY, CVT_SADRAEY = 1.10, 0.090
 CHT_RAYMER, CVT_RAYMER = 1.00 * 0.95, 0.090 * 0.95
 
 
 def panel(area, ar, taper, one_sided):
-    """Planform from area/AR/taper -- Sadraey Eqs. (6.77)-(6.80).
-
-    one_sided=True for a vertical tail (AR = b^2/S over the single surface),
-    False for a horizontal tail (AR = b^2/S over the full, both-sides span).
-    """
+    """Planform from area/AR/taper (Sadraey Eqs. 6.77-6.80); one_sided=True for a vertical tail (AR=b^2/S over the single surface), False for horizontal (AR over the full span)."""
     b = math.sqrt(ar * area)
     cr = 2.0 * area / (b * (1.0 + taper)) if not one_sided else \
         2.0 * area / (b * (1.0 + taper)) * 1.0
@@ -100,10 +57,7 @@ def wing_geometry(x_root_le):
 
 
 def tail_geometry(s_ht, s_vt):
-    """Tail planforms and positions. The HT rides on the fin tip (T-tail), so
-    its x/z follow the vertical tail's size -- shrinking the fin lowers and
-    moves the horizontal, which shortens L_HT. That coupling is why this is
-    solved rather than assigned."""
+    """Tail planforms and positions; the HT rides on the fin tip (T-tail) so shrinking the fin lowers/moves it and shortens L_HT -- that coupling is why this is solved rather than assigned."""
     vt = panel(s_vt, AR_VT, TAPER_VT, one_sided=True)
     vt_le = le_sweep(vt["cr"], TAPER_VT, vt["b"], SWEEP25_VT)
     vt["x_c4"] = X_VT_ROOT + 0.25 * vt["cr"] + vt["y_mac"] * math.tan(math.radians(SWEEP25_VT))
@@ -122,13 +76,7 @@ def tail_geometry(s_ht, s_vt):
 
 
 def weight_items(x_root_le, s_ht, s_vt, ht, vt):
-    """Class-I group weights, arms from the v5 buildup (weights_cg.py) with the
-    tail groups scaled by area and re-armed to the resized surfaces.
-
-    Caveat carried from v5: the tail-group fraction covers fin + dorsal fin
-    together, so scaling the whole group by S_VT/S_VT_ref slightly over-scales
-    the (constant-area) dorsal. At 1.2% MTOW the CG effect is ~0.01 ft.
-    """
+    """Class-I group weights (arms from weights_cg.py) with tail groups scaled by area; caveat: the tail-group fraction covers fin+dorsal together, so scaling by S_VT/S_VT_ref slightly over-scales the constant-area dorsal (~0.01 ft CG effect at MTOW)."""
     dx = x_root_le - X_WING_REF
     groups = [
         ("Wing",                 0.095 * MTOW, 23.62 + dx),
@@ -160,19 +108,7 @@ def cg_of(items):
 
 def solve(cht, cvt, cg_target_pct=28.0, np_fit=None, sm_target=None, quiet=False,
           fix_wing=None):
-    """Fixed-point solve on (wing position, S_HT, S_VT).
-
-    np_fit/sm_target switch the horizontal tail from volume-coefficient sizing
-    to static-margin sizing: given x_np = A + B*S_HT (ft) measured on the
-    parametric, pick S_HT so that (x_np - x_cg)/mac equals sm_target.
-
-    fix_wing pins the wing root LE. This is REQUIRED whenever np_fit is used:
-    the measured fit gives x_np in absolute ft at the wing position it was run
-    at, so letting the wing move would extrapolate it outside its validity. It
-    also keeps weight.md 3's CG chapter intact. The CG still moves, because the
-    tail groups get lighter as the surfaces shrink -- that is solved for, not
-    ignored.
-    """
+    """Fixed-point solve on (wing position, S_HT, S_VT); np_fit/sm_target switch HT sizing from volume-coefficient to static-margin (x_np = A + B*S_HT); fix_wing pins the wing root LE, REQUIRED with np_fit since the measured fit is only valid at the wing position it was run at (CG still moves as tail groups get lighter)."""
     x_w, s_ht, s_vt = (fix_wing or 15.9), S_HT_REF, S_VT_REF
     rows = []
     for it in range(40):
@@ -201,8 +137,7 @@ def solve(cht, cvt, cg_target_pct=28.0, np_fit=None, sm_target=None, quiet=False
         if fix_wing is not None:
             x_w_new = x_w
         else:
-            # Move the wing to hold the CG target; d(cg%)/d(x_w) is ~-0.5/MAC
-            # per ft because roughly half the weight rides with the wing group.
+            # move the wing to hold the CG target; d(cg%)/d(x_w) ~ -0.5/MAC per ft since roughly half the weight rides with the wing group
             x_w_new = x_w + (pct - cg_target_pct) / 100.0 * wing["mac"] * 1.9
 
         if (abs(s_ht_new - s_ht) < 1e-4 and abs(s_vt_new - s_vt) < 1e-4
@@ -269,8 +204,7 @@ def main():
               f"   S_VT = {fin_q['s_vt']:.2f} ft^2, c_VT = {fin_q['cvt']:.4f}")
         print(f"  -> CG = {fin_q['x_cg']:.3f} ft ({fin_q['cg_pct']:.1f}% MAC), "
               f"x_np = {x_np:.3f} ft ({(x_np - w['x_lemac']) / w['mac'] * 100:.1f}% MAC)")
-        # The CG band from weight.md 3 is +/- about the MTOW point; report the
-        # margin at both ends, since the aft limit is the binding one.
+        # CG band (weight.md 3) is +/- about the MTOW point; report margin at both ends since aft is the binding limit
         fwd, aft = fin_q["cg_pct"] - 4.4, fin_q["cg_pct"] + 3.7
         for tag, pct in (("fwd", fwd), ("MTOW", fin_q["cg_pct"]), ("aft", aft)):
             sm = (x_np - w["x_lemac"]) / w["mac"] * 100 - pct

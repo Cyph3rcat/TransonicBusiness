@@ -1,11 +1,4 @@
-"""CL_alpha, dCM/dCL, static margin and neutral point from a real alpha sweep.
-
-Usage: python long_slopes.py xcg cref label1=path1.polar [label2=...]
-
-Preferred over VSPAERO's -stab 0.01-deg finite difference, which for this model
-differences moment coefficients at the 1e-4 level - the same order as the
-solve's own residual noise.
-"""
+"""CL_alpha, dCM/dCL, static margin and neutral point from a real alpha sweep. Usage: python long_slopes.py xcg cref label1=path1.polar [label2=...]. Preferred over VSPAERO's -stab 0.01-deg finite difference, which for this model differences moment coefficients at the 1e-4 level -- the same order as the solve's own residual noise."""
 import sys
 import numpy as np
 

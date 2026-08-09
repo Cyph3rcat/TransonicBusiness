@@ -1,9 +1,4 @@
-"""Three-view general arrangement of full_v7.
-
-Every line is computed from the same numbers gen_v7.py feeds to OpenVSP
-(fuselage station table, wing/winglet/tail planform drivers, nacelle and pylon
-placement), so the drawing and the analysed model cannot diverge.
-"""
+"""Three-view general arrangement of full_v7; every line is computed from the same numbers gen_v7.py feeds to OpenVSP, so the drawing and the analysed model cannot diverge."""
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
@@ -131,9 +126,7 @@ def three_view():
     axs.fill_between(fx[m], fbot[m], np.interp(fx[m], x, zc - hh),
                      color=SKIN, edgecolor=LINE, linewidth=1.1, zorder=2)
 
-    # In side view the wing reads as its root-chord silhouette; the swept tip
-    # chord is shown as a faint outline behind it rather than as a filled wedge,
-    # which is how a general-arrangement drawing conventionally handles sweep.
+    # Side view shows the wing as its root-chord silhouette; the swept tip chord is a faint outline, the conventional GA-drawing treatment of sweep.
     zw = WING["z"]
     z_tip_side = zw + wq["y_t"] * np.tan(np.radians(WING["dihedral"]))
     axs.plot([wq["x_le_t"], wq["x_te_t"]], [z_tip_side, z_tip_side],

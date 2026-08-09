@@ -1,41 +1,4 @@
-"""
-Reconverged re-run of the SC(2)-0412 adaptive Mach sweep (2026-08-04, v2).
-
-Why this exists: the v1 sweep (adaptive_sweep.py, results in
-mach_sweep_sc20412/) produced a genuinely noisy, non-monotonic Cd(M) curve
-(272 -> 52 -> 233 -> 155 -> 44 -> 126 -> 208 counts). Root-caused by comparing
-against this project's OWN proven-stable baseline (the original SC(2)-0410 vs
-NACA 64-209 screen, su2_screen/README.md round 2, which genuinely plateaued):
-the v1 template loosened CONV_CAUCHY_EPS 100x (5E-7 -> 5E-5), CONV_CAUCHY_ELEMS
-3x (300 -> 100), and cut ITER by a third (4500 -> 3000) relative to that
-baseline. This script reverts those three to the baseline and adds
-RESTART_SOL solution-continuation chaining between Mach points (each point
-warm-starts from the previous point's converged flow instead of a cold start).
-
-Explicitly NOT changed: AoA control. FIXED_CL_MODE was already piloted 3x for
-this exact section/Re/Mach bracket and never engaged the AoA controller in
-up to 2000 iterations, while the underlying fixed-AoA flow itself cycled CL
-~0.0-0.44 with a ~1000-iteration period -- root-caused as genuine transonic
-buffet (periodic shock-induced separation) on this 12%-thick section, not a
-numerics artifact (lowering CFL 3.0->1.5 made no difference). A steady RANS
-solve cannot converge a physically unsteady flow regardless of how AoA is
-driven, so fixed-AoA-per-point (PG-corrected estimate) is kept, matching both
-the v1 sweep and the original validated screen's methodology. See
-ENVIRONMENT.md and gen_configs_machsweep.py's docstring for the full record.
-
-Expectation going in: if the higher-Mach points (M >~ 0.65-0.70, where CL
-cycling was previously observed) still fail to plateau even at ITER=4500 with
-the tightened Cauchy tolerance, that is itself evidence of real buffet onset
-near M_dd, not proof the fix failed -- worth reporting as such, not silently
-discarded.
-
-Runs in a fresh directory (mach_sweep_v2/ in WSL, mach_sweep_sc20412_v2/ once
-copied back to the Windows repo) so v1's results are left untouched for the
-historical record, same pattern as this repo's existing round-1/round-2 split.
-
-Run from the mach_sweep_v2 working directory (has sc20412.su2 already):
-    python3 adaptive_sweep_v2.py
-"""
+"""Reconverged re-run of the v1 SC(2)-0412 sweep -- v1's Cd(M) was noisy/non-monotonic; this reverts convergence tolerances to the proven baseline and adds RESTART_SOL warm-start chaining between Mach points."""
 import json
 import math
 import re
@@ -58,10 +21,8 @@ MAX_POINTS = 7
 DCD_DM_THRESHOLD = 0.10
 CONSECUTIVE_NEEDED = 2
 
-# TEMPLATE: convergence block reverted to the proven-stable baseline
-# (su2_screen/README.md round 2 / gen_configs_machsweep.py), NOT the loosened
-# v1 values. RESTART_SOL/SOLUTION_FILENAME are new -- chain each point off the
-# previous point's converged solution.
+# AoA control unchanged (fixed AoA per point, no FIXED_CL_MODE): the CL cycling here is physical transonic buffet, not a numerics artifact -- see gen_configs_machsweep.py
+# Convergence block reverted to the pre-v1 baseline; RESTART_SOL/SOLUTION_FILENAME chain each point off the previous point's solution
 TEMPLATE = """\
 SOLVER= RANS
 KIND_TURB_MODEL= SST

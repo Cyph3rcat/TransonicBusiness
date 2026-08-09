@@ -1,15 +1,4 @@
-"""
-v1 (independent cold-start, loose Cauchy) vs v2 (reconverged Cauchy, warm-start
-chained) comparison for the SC(2)-0412 adaptive Mach sweep.
-
-Purpose: v2 was supposed to fix v1's noisy Cd(M) curve. It didn't produce a
-clean hockey stick -- instead CL drifted monotonically from 0.207 (M=0.59) down
-to 0.033 (M=0.77), something v1 never showed (v1's CL stayed in a 0.16-0.20
-band throughout). Same mesh, same AoA-per-point formula, same Reynolds
-schedule -- the only mechanism that differs is RESTART_SOL chaining each point
-off the previous point's solution. This plot exists to show that drift
-directly, side by side with v1, rather than just asserting it.
-"""
+"""v1 (cold-start) vs v2 (reconverged, RESTART_SOL-chained) comparison for the SC(2)-0412 sweep -- v2 didn't fix v1's noisy Cd(M); instead CL drifted monotonically 0.207->0.033 across the sweep, isolating RESTART_SOL chaining as the cause since everything else (mesh, AoA formula, Re schedule) was unchanged."""
 import json
 from pathlib import Path
 

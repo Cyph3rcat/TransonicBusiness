@@ -1,16 +1,4 @@
-"""
-Extract M_crit/M_dd from the v2 (reconverged, warm-started) SC(2)-0412 sweep,
-and compare against v1. Adds a curve-fit fallback for M_dd since the raw
-2-consecutive-interval Boeing-criterion check (same as v1's method) does not
-find a crossing in v2's data either -- see adaptive_sweep_v2.log: only one
-isolated hit (M=0.6522, dCd/dM=+0.162), never followed by a second, so the
-loop ran through all 7 points without triggering the adaptive stop.
-
-This applies the fallback method discussed before re-running: fit a smooth
-curve through the (still noisy) Cd(M) points and read M_dd off the fit's
-slope, rather than off two adjacent raw samples -- reported alongside the
-raw-threshold result (which is None), not in place of disclosing it.
-"""
+"""Extract M_crit/M_dd from the v2 sweep -- the raw 2-consecutive-interval Boeing criterion (same as v1) finds no crossing here either (only one isolated hit, never repeated), so this adds a curve-fit fallback for M_dd, reported alongside the raw (None) result rather than in place of it."""
 import csv
 import json
 from pathlib import Path
@@ -62,9 +50,7 @@ def find_hockey_stick_raw(machs, cds):
 
 
 def find_mdd_fit(machs, cds, degree=3):
-    """Fallback: least-squares fit Cd(M), read M_dd off where the FIT's slope
-    first sustains >= DCD_DM_THRESHOLD, evaluated on a dense grid (not just the
-    7 raw points) so a single noisy sample can't flip the answer."""
+    """Fallback: fit Cd(M) and read M_dd off the FIT's slope on a dense grid, so one noisy sample can't flip the answer."""
     coeffs = np.polyfit(machs, cds, degree)
     deriv = np.polyder(coeffs)
     m_dense = np.linspace(min(machs), max(machs), 400)

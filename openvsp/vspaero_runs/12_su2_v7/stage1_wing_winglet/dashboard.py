@@ -1,11 +1,4 @@
-"""Live CFD campaign progress dashboard -- run in a separate terminal:
-
-    python dashboard.py
-
-Polls status.json (written by sweep_runner.py, refreshed every SU2 history
-write) and redraws a simple text status pane every second. No dependencies
-beyond the standard library, so it runs directly with plain Windows python.
-"""
+"""Live CFD campaign progress dashboard (run in a separate terminal: python dashboard.py); polls status.json (written by sweep_runner.py) and redraws a text status pane every second, no dependencies beyond stdlib so it runs with plain Windows python."""
 import json
 import os
 import sys

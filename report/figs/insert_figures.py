@@ -1,10 +1,4 @@
-"""Replace the [FIGURE ...] placeholders in prelim_design_report.html with the
-generated images, and add the <figure> styling the report did not previously
-need.
-
-Idempotent: running it twice leaves the document unchanged, because it matches
-on the placeholder paragraphs, which no longer exist after the first pass.
-"""
+"""Replace the [FIGURE ...] placeholders in prelim_design_report.html with the generated images; idempotent because it matches on placeholder paragraphs that no longer exist after the first pass."""
 import os
 import re
 
@@ -12,8 +6,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPORT = os.path.dirname(HERE)
 DOC = os.path.join(REPORT, "prelim_design_report.html")
 
-# figure number -> (file, caption). Captions are the report's own descriptions,
-# rewritten as captions rather than as instructions to the draughtsman.
+# figure number -> (file, caption); captions are the report's own descriptions, rewritten from draughtsman instructions.
 FIGURES = {
     "1.1": ("fig_1_1_market.png",
             "The competitive set in range and cruise Mach, marker area proportional "
@@ -159,8 +152,7 @@ def main():
         if k == 0 and num != "5.0":
             print(f"  ! no placeholder found for FIGURE {num}")
 
-    # Figure 5.0 is new: the airfoil gallery has no placeholder in the original
-    # text, so anchor it just before the nine-candidate screening table.
+    # Figure 5.0 has no placeholder in the original text, so anchor it just before the nine-candidate screening table.
     anchor = ("<p>with the technology factor $$\\kappa_A = 0.87$$ for conventional "
               "sections and 0.95 for the NASA supercritical family. All coordinates "
               "were taken from the UIUC database [13].</p>")

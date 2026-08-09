@@ -1,28 +1,4 @@
-"""Raymer-method parasite drag buildup and cruise drag polar for full_v6.
-
-Method: Raymer Ch.12 Eq. (12.24),
-    CD0 = sum_c ( Cf_c * FF_c * Q_c * Swet_c ) / Sref  +  CD_misc + CD_L&P
-
-The per-component Cf, FF and Swet come from OpenVSP's ParasiteDrag module
-(refs/raymer/ch12_aerodynamics.md documents the same equations), run at the
-cruise point on the actual OML rather than off a planform estimate -- that is
-the only part of this that is not hand-arithmetic, and it is the part where
-using the real lofted geometry is worth something.
-
-Two corrections are applied here because OpenVSP does not:
-  Q  -- OpenVSP writes Q = 1.0 for every component. Raymer Ch.12 gives real
-        interference factors; the one that matters here is the OTWEM nacelle,
-        which sits 0.47 nacelle diameters above the wing, i.e. inside Raymer's
-        "less than about one diameter -> Q = 1.3" case.
-  L&P -- Raymer's leakage-and-protuberance allowance, 2-5% of CD0 for a jet.
-
-Induced drag comes from the VSPAERO Trefftz-plane (wake) result, which is the
-trustworthy induced-drag column for this mixed panel/VLM model -- the
-surface-integration CDi column carries a body pressure residual (see the
-campaign README's fidelity caveats).
-
-Usage:  python drag_buildup.py
-"""
+"""Raymer Ch.12 parasite drag buildup (CD0 = sum(Cf*FF*Q*Swet)/Sref + CD_misc + CD_L&P) + cruise polar for full_v6, using OpenVSP's per-component Cf/FF/Swet off the real OML; corrects OpenVSP's Q=1.0 default with Raymer interference factors (OTWEM nacelle sits 0.47 dia above the wing -> Q=1.3) and adds a 2-5% leakage/protuberance allowance; induced drag uses the VSPAERO Trefftz-plane CDi since the surface-integration column carries a body pressure residual."""
 import csv
 import math
 import os
@@ -62,8 +38,7 @@ def read_buildup(path):
             if len(p) < 12 or p[0] in ("Component Name", "") or "_" in p[0]:
                 continue
             try:
-                # cols: 0 name, 1 Swet, 2 Lref, 3 t/c, 4 FF, 5 FF eqn, 6 Re,
-                #       7 %Lam, 8 Cf, 9 Q, 10 f, 11 Cd, 12 %total
+                # cols: 0 name,1 Swet,2 Lref,3 t/c,4 FF,5 FF eqn,6 Re,7 %Lam,8 Cf,9 Q,10 f,11 Cd,12 %total
                 rows.append(dict(name=p[0], swet=float(p[1]), lref=float(p[2]),
                                  toc=float(p[3]), ff=float(p[4]),
                                  cf=float(p[8]), f=float(p[10])))
@@ -115,16 +90,7 @@ def main():
     print(f"  wetted aspect ratio = b^2/Swet = {BREF ** 2 / swet_tot:.3f}")
 
     # ---- induced drag from the Trefftz plane ------------------------------
-    # NORMALIZATION (fixed 2026-08-07): fit the Trefftz-plane induced drag
-    # CDiw against the Trefftz-plane lift CLwtot, NOT against the
-    # surface-integration lift CLtot. The two are different quantities: panel
-    # BODIES carry pressure lift that never sheds a trailing wake sheet, so it
-    # appears in CLtot but legitimately not in CLwtot (the gap is ~4% on v6 and
-    # ~9% on v7, whose belly fairing is larger -- physical, not a defect).
-    # Fitting wake drag against surface lift mixed the two and produced
-    # nonsense: e = 1.03 (v6) / 1.16 (v7), and a spurious 30% "improvement"
-    # from v6 to v7 that was pure normalization artifact. Fitted consistently,
-    # e = 0.96 / 0.99 and is flat across the alpha sweep, as it should be.
+    # NORMALIZATION (fixed 2026-08-07): fit CDiw against Trefftz-plane CLwtot, not surface-integration CLtot -- panel bodies carry pressure lift with no wake sheet, so mixing them gave spurious e=1.03/1.16 and a fake 30% v6->v7 "improvement"; fixed, e=0.96/0.99 and flat across alpha.
     c, d = read_polar(POLAR)
     clw, cdiw = d[:, c["CLwtot"]], d[:, c["CDiw"]]
     m = clw > 0.05
@@ -134,15 +100,8 @@ def main():
           f"winglets on, wake/Trefftz)")
 
     # ---- cruise polar --------------------------------------------------
-    # config.md Part A: "Cruise altitude: FL410 initial, cruise-climb to
-    # FL450" is already GROUNDED -- but this script previously held FL410
-    # constant for the whole leg, silently ignoring that decision and
-    # understating mid/end-cruise L/D. Fixed here: fly the documented
-    # cruise-climb, MTOW at FL410 climbing to FL450 as fuel burns.
-    # Above the 36,089 ft tropopause T is isothermal (216.65 K), so TAS is
-    # flat with altitude at fixed Mach (V=774.5 ft/s throughout) and only
-    # rho varies -- isothermal-layer barometric formula, scale height
-    # H = RT/g = 20,805.8 ft, anchored at the tropopause (rho=7.065e-4).
+    # config.md Part A specifies cruise-climb FL410->FL450 (GROUNDED); this script previously held FL410 constant, understating mid/end-cruise L/D -- fixed here.
+    # above the 36,089 ft tropopause T=216.65K is isothermal so TAS is flat at fixed Mach (V=774.5 ft/s); only rho varies, via the isothermal barometric formula, H=RT/g=20,805.8 ft anchored at the tropopause (rho=7.065e-4)
     vinf = 774.5
     RHO_TROP, H_TROP, SCALE_H = 7.065e-4, 36089.0, 20805.8
 
@@ -169,7 +128,6 @@ def main():
           f"data in this project. Flagged in doubts.md/limitations.md, not\n"
           f"  resolved here.")
     q_dyn = 0.5 * isa_rho(41000.0) * vinf ** 2  # FL410, for the L/D_max/K_LD print below
-    # L/D_max and the CL that achieves it
     cl_opt = math.sqrt(cd0 / k)
     print(f"\n  L/D_max = {cl_opt / (2 * cd0):.2f} at CL = {cl_opt:.3f} "
           f"(= {cl_opt * q_dyn * SREF:.0f} lb at FL410/M0.80)")

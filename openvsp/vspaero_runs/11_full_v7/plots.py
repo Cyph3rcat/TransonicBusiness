@@ -1,13 +1,4 @@
-"""Figures for the full_v6 empennage-resizing pass.
-
-Produces:
-  v6_sizing.png   tail sizing: NP/SM vs S_HT, and Cn_beta vs S_VT
-  v6_cg_sm.png    CG envelope and static margin across the flight envelope
-  v6_drag.png     CD0 component buildup and the cruise drag polar
-  v6_compare.png  v5 -> v6 before/after summary
-
-Run from this directory after gen_v6.py has produced the variants.
-"""
+"""Figures for the full_v6 empennage-resizing pass -- v6_sizing.png (NP/SM vs S_HT, Cn_beta vs S_VT), v6_cg_sm.png (CG envelope + static margin), v6_drag.png (CD0 buildup + cruise polar), v6_compare.png (v5->v6 summary); run after gen_v6.py has produced the variants."""
 import glob
 import math
 import os
@@ -23,11 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MAC, XLEMAC, SREF, BREF = 5.0236, 18.512, 193.678, 41.5324
 AR = BREF ** 2 / SREF
 S_HT_FINAL, S_VT_FINAL = 34.0, 45.0
-# Measured on the rebuilt final configuration, not read off the parametric fit.
-# The fit (used to CHOOSE the area) predicts x_np = 20.764; the rebuilt model
-# measures 20.604 -- a 1.9 in / 3.2% MAC difference, because the fit was taken
-# at S_VT = 59 whereas the final model also shrank the fin, which lowers the
-# T-tail and shortens L_HT. The measured value governs everything reported.
+# measured on the rebuilt final config, not the parametric fit: fit predicted x_np=20.764, rebuild measures 20.604 (fit was taken at S_VT=59; final model also shrank the fin, lowering the T-tail and shortening L_HT) -- measured value governs everything reported
 XNP_MEASURED = 20.604
 XCG_MTOW = 19.749
 

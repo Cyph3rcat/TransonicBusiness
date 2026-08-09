@@ -1,11 +1,4 @@
-"""Generate + run VSPAERO taper/twist parametric variants of the v6 wing.
-
-Fixed: S=193.678 ft^2, b=41.5324 ft, Lambda25=13.8 deg (at 0.25 loc),
-dihedral=3 deg, SC(2)-0412. Varies taper (at twist=-3) and twist (at taper=0.35).
-Chords recomputed to hold S,b: cr = 2S/(b(1+lam)), ct = lam*cr.
-
-Run from openvsp/vspaero_runs/:  python tools/gen_sweep.py
-"""
+"""Generates + runs VSPAERO taper/twist parametric variants of the v6 wing (fixed S=193.678 ft^2, b=41.5324 ft, Lambda25=13.8 deg, dihedral=3 deg, SC(2)-0412; varies taper at twist=-3, twist at taper=0.35; chords recomputed to hold S,b: cr=2S/(b(1+lam)), ct=lam*cr). Run from openvsp/vspaero_runs/: python tools/gen_sweep.py"""
 import os
 import subprocess
 import sys

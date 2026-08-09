@@ -1,23 +1,4 @@
-"""Fit constant-CL drag rise from whatever solved points exist on disk.
-
-Deliberately decoupled from dragrise_fixedcl.py's run loop: that loop was
-killed partway through (harness stopped the wrapper; the in-flight SU2 kept
-going and its result survived), and losing the analysis because the
-orchestration died would be silly. This reads every solved angle it can find,
-groups by Mach, and fits -- so it works on partial data and can simply be
-re-run as more points land.
-
-Per Mach it fits CD = CD0 + k*CL^2, then reports:
-  CD at CL=0.360  -- drag at the real cruise lift (the drag-rise curve)
-  CD0             -- zero-lift drag; its climb IS the wave drag appearing
-  e               -- span efficiency; a fall means the shock is distorting
-                     the spanwise lift distribution, not just adding drag
-  fit residual    -- honesty check. Small = the polar model holds. Large =
-                     the flow has gone nonlinear and the interpolated number
-                     should not be trusted.
-
-Usage:  python3 analyze_dragrise.py
-"""
+"""Fits constant-CL drag rise from whatever solved points exist on disk -- deliberately decoupled from dragrise_fixedcl.py's run loop so a killed orchestrator doesn't lose survived SU2 results; reports CD at CL=0.360 (drag-rise curve), CD0 (its climb IS wave drag), e (a fall means the shock distorts the spanwise lift distribution), and fit residual (large = nonlinear flow, don't trust the interpolation). Usage: python3 analyze_dragrise.py"""
 import csv
 import glob
 import json
@@ -91,12 +72,7 @@ def main():
     rows = []
     for mach in sorted(by_mach):
         pts = by_mach[mach]
-        # Fit inside a SYMMETRIC window around the target lift, so every Mach
-        # is fitted over a comparable CL range. Two reasons this matters:
-        # the M0.80 3.7deg point sits in shock-separated flow and would bend
-        # a polar meant to describe cruise-lift behaviour; and an asymmetric
-        # window (M0.80 fitted low, its neighbours fitted high) is what made
-        # CD0 come out non-monotonic across Mach in the first pass.
+        # fit inside a symmetric window around the target CL so every Mach gets a comparable range: M0.80's 3.7deg point sits in shock-separated flow and an asymmetric window made CD0 come out non-monotonic across Mach in the first pass
         usable = [p for p in pts if abs(p[1] - TARGET_CL) <= 0.12]
         if len(usable) < 2:
             usable = pts[:3]

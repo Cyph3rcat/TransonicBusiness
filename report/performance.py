@@ -1,23 +1,4 @@
-"""Chapter 10 -- performance analysis.
-
-Method: Raymer Ch.17, using the drag polar measured in Chapter 9 (parasite
-buildup on the real full_v7 OML + VSPAERO Trefftz-plane induced drag) rather
-than a historical L/D. Specifically:
-
-  Raymer Eq. (17.102)   ground roll by closed-form integration of the
-                        accelerating/decelerating equation of motion
-  Raymer Eq. (17.113)   balanced field length (the Torenbeek-derived form)
-  Raymer Eq. (17.114)   average takeoff thrust for a jet, from BPR
-  Raymer Table 17.1     ground rolling resistance coefficients
-  Raymer Ch.17          rate of climb, ceilings, Breguet range/endurance
-  FAR 25.111/119/121    certification climb gradients
-  FAR 25.333/335/337    manoeuvre and gust V-n envelope
-
-Configuration deltas (flaps, gear) use Raymer Ch.12 typical increments; they
-are the softest inputs here and are flagged as such in the report.
-
-Run:  python report/performance.py
-"""
+"""Chapter 10 -- performance analysis (Raymer Ch.17 + FAR 25.111/119/121/333/335/337), using the Chapter 9 measured drag polar rather than a historical L/D; flap/gear increments (Raymer Ch.12 typicals) are the softest inputs here."""
 import json
 import math
 import os
@@ -164,10 +145,7 @@ V_MO_KEAS, M_MO = 300.0, 0.80    # operating limits (ASSUMPTION, class-typical)
 
 
 def climb_speed_limit(h):
-    """The speed the aircraft is actually allowed to climb at: 250 KIAS below
-    10,000 ft, then V_MO in equivalent airspeed, then M_MO once the Mach
-    crossover is reached. Without this the unconstrained optimum sits near V_MO
-    at sea level and reports a rate of climb no operator would ever fly."""
+    """Allowed climb speed (250 KIAS below 10,000 ft, then V_MO EAS, then M_MO); without this cap the optimum sits near V_MO at sea level, a rate of climb no operator would fly."""
     rho, _, a = isa(h)
     v_eas_cap = (250.0 if h < 10000.0 else V_MO_KEAS) * 1.68781
     v_from_eas = v_eas_cap / math.sqrt(rho / RHO_SL)

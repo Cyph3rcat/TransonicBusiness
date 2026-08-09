@@ -1,32 +1,4 @@
-"""Leave-one-out component buildup: how much does each component contribute
-to CMy (and CL/CD) at a single operating point?
-
-Method: run the full configuration, then run it again with exactly one
-component pulled out of the VSPAERO analysis set (still built, just excluded
-from GeomSet/ThinGeomSet, so it contributes zero force/moment). The
-difference
-
-    delta_Cmy(component) = Cmy_full - Cmy_without(component)
-
-is that component's net pitching-moment contribution AT this configuration --
-interference with the rest of the airframe is included, not assumed away,
-because it's a real difference of two real solves, not a superposition.
-
-Run at alpha = 3.7 deg (~cruise CL for this model), single point, both
-GeomSet=0 (all bodies+lifting in one pass isn't how VSPAERO splits it, so this
-still uses the fuselage/wing set convention from gen_v6.TEMPLATE).
-
-Two configurations compared:
-  v5-equivalent -- v6's (closed-tail) fuselage carrying v5's DOCUMENTED tail
-                   areas (S_HT=51.68, S_VT=59.0). This isolates the tail-area
-                   change from the fuselage-closure fix and the open-tail bug
-                   (doubts.md #26) -- comparing against the actual v5.vsp3
-                   would conflate a data-corrupting defect with the sizing
-                   change being evaluated.
-  v6            -- final resized tails (S_HT=34.0, S_VT=45.0).
-
-Usage:  python component_moment.py
-"""
+"""Leave-one-out component buildup: delta_Cmy(component) = Cmy_full - Cmy_without(component), a real difference of two solves (interference included, not assumed away) at alpha=3.7 deg (~cruise CL). Compares v5-equivalent (v6's closed-tail fuselage + v5's documented tail areas, avoiding the v5.vsp3 open-tail bug in doubts.md #26) against the final resized v6 tails."""
 import os
 import sys
 

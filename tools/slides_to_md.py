@@ -1,15 +1,4 @@
-"""Build one markdown file per lecture-slide deck.
-
-The decks are PowerPoint exports whose content is bitmaps, so a text-only
-conversion (pypdf, markitdown, pdfminer) recovers slide titles and footers and
-nothing else -- confirmed on all 14 decks. This emits, per slide: the text layer
-that does exist, plus a link to the full-page render from render_slides.py, so
-the content is actually reachable from markdown.
-
-Slides whose content has been read and transcribed by hand are listed in
-TRANSCRIPTIONS below and get their transcription inlined. Everything else is
-marked so it is obvious what has and has not been verified -- do not treat an
-untranscribed slide as if its content is known.
+"""Builds one markdown file per lecture-slide deck, pairing the title/footer-only text layer (bitmap decks yield nothing else) with a link to render_slides.py's page image; slides in TRANSCRIPTIONS get hand-verified text inlined, everything else is flagged as unverified.
 
 Usage:  python tools/render_slides.py --all && python tools/slides_to_md.py
 """

@@ -1,34 +1,4 @@
-"""Generate SU2 RANS config files for a Mach sweep at (approximately) fixed
-C_L, for the SC(2)-0412 vs SC(2)-0414 critical-Mach determination.
-
-Pilot testing (2026-08-04) showed FIXED_CL_MODE never actually engaged within
-1500-2000 iterations across three attempts (no AoA-update diagnostic ever
-printed), while the underlying fixed-AoA flow itself showed genuine periodic
-oscillation (CL cycling ~0.0-0.44 with a ~1000-iteration period, residuals
-stuck around rms_rho~-1.8 to -2.5, well short of the ~-2.86 the validated
-baseline reached) at the bracket's higher Mach points -- consistent with real
-transonic buffet/periodic shock-induced separation on this 12%-thick section,
-not a numerics/CFL artifact (lowering CFL_NUMBER 3.0->1.5 and the adaptation
-cap 100->20 made no qualitative difference). A steady RANS solve cannot
-converge a genuinely unsteady flow regardless of AoA-driver tuning.
-
-Switched to the SAME proven-stable methodology as the original SC(2)-0410 vs
-NACA 64-209 screen (su2_screen/gen_configs.py): FIXED AoA per run, no
-FIXED_CL_MODE. AoA is set via a Prandtl-Glauert-corrected estimate
-(aoa_guess()) so each run lands close to but not exactly at C_L=0.248 --
-matching how the original screen also didn't hit an exact target C_L, and
-accepted as adequate for a conceptual-design-level screen. ITER=4500,
-CONV_STARTITER=500 match the original validated baseline exactly (no
-FIXED_CL overhead to budget for anymore).
-
-Re is NOT held fixed across the sweep: at fixed FL410 temperature/altitude,
-Re is proportional to true airspeed, hence to Mach. Re(M) = Re_ref * (M/M_ref).
-
-Usage: python3 gen_configs_machsweep.py [--pilot]
-  --pilot: only emit the single mid-bracket calibration run (sc20412 at its
-  own M_crit_PG estimate) to sanity-check convergence before committing the
-  full ~14-run matrix.
-"""
+"""Generate SU2 RANS Mach-sweep configs at (~)fixed CL for SC(2)-0412 vs SC(2)-0414 -- uses fixed AoA per run (PG-corrected estimate), not FIXED_CL_MODE, which piloted 3x and never engaged while the underlying flow showed genuine transonic buffet (CL cycling ~0.0-0.44), not a numerics artifact."""
 import json
 import math
 import sys
@@ -118,8 +88,7 @@ pilot = "--pilot" in sys.argv
 
 
 def aoa_guess(m, alpha_incomp_at_cl_target):
-    """PG-corrected AoA estimate for C_L=0.248 at Mach m (linearized -- good
-    enough to land close to the target, not exact)."""
+    """PG-corrected AoA estimate for CL=0.248 at Mach m -- linearized, close enough not exact."""
     cl_incomp_equiv = CL_TARGET * math.sqrt(max(1 - m**2, 1e-6))
     return alpha_incomp_at_cl_target + (cl_incomp_equiv - CL_TARGET) / A0_DEG
 
@@ -138,7 +107,7 @@ for cand, (mesh, pg_data) in candidates.items():
     iters, startiter, tag_suffix = 4000, 500, "_pilot" if pilot else ""
 
     for m in machs:
-        reynolds = RE_REF * (m / M_REF)
+        reynolds = RE_REF * (m / M_REF)  # Re scales with true airspeed at fixed FL410 temperature/altitude, hence with Mach
         aoa0 = round(aoa_guess(m, alpha_incomp), 3)
         tag = f"{cand}_M{m:.4f}".replace(".", "p") + tag_suffix
         cfg = TEMPLATE.format(mach=m, reynolds=reynolds, aoa_guess=aoa0, iters=iters, startiter=startiter, mesh=mesh, tag=tag)

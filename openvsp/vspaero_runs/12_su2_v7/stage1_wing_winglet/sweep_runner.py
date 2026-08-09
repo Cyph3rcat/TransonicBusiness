@@ -1,21 +1,4 @@
-"""Stage 1 SU2 Euler Mach sweep runner: drag-divergence curve, fixed AoA.
-
-Sweeps M = 0.60 -> 0.85 at AoA=3.7 deg (fixed -- NOT FIXED_CL_MODE, which
-su2_screen/ENVIRONMENT.md documented as unstable on this SU2 build: it never
-engaged an AoA update in 3 pilot attempts). Monotonic sweep direction with
-restart chaining (solution continuation) between adjacent Mach points per
-cfdinstructions.md sec.1 -- each point starts from the previous point's
-converged flow instead of uniform freestream, which is both faster and
-preserves shock-location continuity across the sweep.
-
-Writes status.json after every completed Mach point (progress dashboard
-reads this -- see dashboard.py, run separately in another terminal). Run
-this itself in the background (nohup) since the full sweep is many
-SU2_CFD invocations.
-
-Usage (inside WSL, in this directory):
-    python3 sweep_runner.py
-"""
+"""Stage 1 SU2 Euler Mach sweep runner: drag-divergence curve at fixed AoA=3.7 deg, M=0.60->0.85 (NOT FIXED_CL_MODE, documented unstable on this SU2 build -- never engaged an AoA update in 3 pilot attempts, su2_screen/ENVIRONMENT.md); restart-chains each point from the nearest already-converged Mach point (faster, preserves shock-location continuity, cfdinstructions.md sec.1); writes status.json after every point for dashboard.py, run this itself with nohup since the full sweep is many SU2_CFD invocations. Usage (inside WSL): python3 sweep_runner.py"""
 import json
 import os
 import re
@@ -25,9 +8,7 @@ import time
 import gen_configs as gc
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# Written to the Windows-visible /mnt/c path (not the WSL-native run dir)
-# so dashboard.py can be run directly from a normal Windows terminal with
-# no WSL access needed.
+# written to the Windows-visible /mnt/c path (not the WSL-native run dir) so dashboard.py can run directly from a normal Windows terminal
 STATUS = "/mnt/c/Users/cyphe/downloads/airplane/openvsp/vspaero_runs/12_su2_v7/stage1_wing_winglet/status.json"
 SU2 = "/home/cyph3r/mses_replacement/su2/bin/SU2_CFD"
 
@@ -36,11 +17,7 @@ AOA = 3.7
 MESH_FILE = "wing_winglet_euler3.su2"   # refined mesh, make_mesh_euler3.py
 ITER_CAP = 3000
 
-# No coarse-mesh fallback any more, deliberately. The coarse mesh's results
-# are not merely imprecise, they are invalid: it under-predicted CL by ~24%
-# (0.340 vs 0.423 at M0.60) and returned NEGATIVE drag at M0.60/0.65. Falling
-# back to it silently would reproduce exactly the numbers this rebuild exists
-# to replace, so fail loudly instead.
+# no coarse-mesh fallback, deliberately: it under-predicted CL by ~24% (0.340 vs 0.423 at M0.60) and returned NEGATIVE drag at M0.60/0.65 -- falling back silently would reproduce exactly the numbers this rebuild exists to replace, so fail loudly instead
 if not os.path.exists(os.path.join(HERE, MESH_FILE)):
     raise SystemExit(f"{MESH_FILE} not found -- run make_mesh_euler3.py first")
 
@@ -66,9 +43,7 @@ def tail_history(tag, last_n=1):
 
 
 def run_point(idx, mach, restart_from):
-    # "fine_" prefix keeps these separate from the superseded coarse-mesh
-    # history_/surface_ files rather than overwriting them -- the old numbers
-    # stay on disk so the before/after comparison remains checkable.
+    # "fine_" prefix keeps these separate from the superseded coarse-mesh files rather than overwriting them, so the before/after comparison remains checkable
     tag = "fine_" + f"m{mach:.2f}".replace(".", "p")
     cfg_path = gc.write_config(tag, mach=mach, aoa=AOA, mesh_file=MESH_FILE,
                                 iters=ITER_CAP, restart_from=restart_from)
@@ -116,13 +91,9 @@ def main():
                  sweep_start_time=time.time())
 
     results = []
-    # Sweep monotonically from the design point outward isn't as simple as
-    # one direction here (0.80 is mid-sweep) -- restart each point from
-    # whichever adjacent point already converged, closest Mach first.
+    # 0.80 is mid-sweep, not an endpoint, so restart each point from whichever adjacent point already converged, closest Mach first
     order = sorted(range(len(MACH_POINTS)), key=lambda i: abs(MACH_POINTS[i] - 0.80))
-    # Cold start. The previous version seeded this with "design_M080", whose
-    # restart file belongs to the OLD coarse mesh -- a different node count
-    # entirely, so SU2 would have either aborted or restarted from garbage.
+    # cold start -- the previous version seeded this with "design_M080", whose restart file belongs to the OLD coarse mesh (different node count), so SU2 would abort or restart from garbage
     prev_tag = None
     for rank, idx in enumerate(order):
         mach = MACH_POINTS[idx]

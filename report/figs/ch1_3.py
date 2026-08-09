@@ -8,8 +8,7 @@ from common import (use_style, save, title, read_wavedrag_area, VSP,
                     C1, C2, C3, C4, C5, C8, INK, INK2, MUTED, GRID, AXIS,
                     CRITICAL, GOOD, BLUES)
 
-# Competitive set. Range and cruise Mach as tabulated in report section 1.3;
-# MTOW sets the marker area.
+# Competitive set: range and cruise Mach as tabulated in report section 1.3; MTOW sets the marker area.
 FLEET = [
     # name,                 range nm, Mach,  MTOW lb, colour
     ("HondaJet Elite II",       1547, 0.72, 11100, C3),
@@ -61,12 +60,7 @@ def fig_1_1():
 
 
 def fig_2_1():
-    """MTOW and empty weight against the competitive set.
-
-    Only the quantities §1.3 and §2.4 actually tabulate are plotted. The
-    HondaJet empty weight is a published figure that did not enter the sizing
-    (§2.4 blends the CJ4 and Phenom ratios only) and is drawn hollow to say so.
-    """
+    """MTOW and empty weight vs the competitive set; HondaJet empty weight is a published figure that did not enter the sizing, so it is drawn hollow."""
     use_style()
     names = ["This design", "HondaJet\nElite II", "Phenom 300E", "Citation CJ4"]
     mtow = [11660, 11100, 18344, 17110]
@@ -175,8 +169,7 @@ def fig_3_2():
     xw, aw = read_wavedrag_area(f"{VSP}/08_full_v4/wavedrag_full_v3.csv")
     xc, ac = read_wavedrag_area(f"{VSP}/08_full_v4/wavedrag_full_v4.csv")
 
-    # Sears-Haack of the same length and volume as the adopted (constant-barrel)
-    # body, i.e. the minimum-wave-drag distribution this body could aim at.
+    # Sears-Haack of the same length and volume as the adopted body: the minimum-wave-drag distribution it could aim at.
     L = xc[-1] - xc[0]
     V = np.trapezoid(ac, xc)
     t = (xc - xc[0]) / L

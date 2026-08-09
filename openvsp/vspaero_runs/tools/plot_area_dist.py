@@ -1,7 +1,4 @@
-"""Plot A(x) area distributions from WaveDrag CSVs vs Sears-Haack ideal.
-
-Usage: python plot_area_dist.py out.png csv1 [csv2 ...]
-"""
+"""Plots A(x) area distributions from WaveDrag CSVs vs Sears-Haack ideal. Usage: python plot_area_dist.py out.png csv1 [csv2 ...]"""
 import sys
 import numpy as np
 import matplotlib

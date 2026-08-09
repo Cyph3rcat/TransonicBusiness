@@ -1,23 +1,4 @@
-"""v5 -> v6 comparison: parasitic, induced and interference drag, and the
-per-component pitching-moment buildup.
-
-"v5" here means **v5-equivalent**: v6's fuselage (closed tail -- v5's actual
-file has an open tail that corrupts CMy, doubts.md #26) carrying v5's
-DOCUMENTED tail areas (S_HT=51.68, S_VT=59.0 ft^2). This isolates the
-tail-resizing effect from the fuselage-closure fix, which is the honest
-comparison -- diffing against the corrupted v5.vsp3 directly would mix a data
-bug into a sizing result.
-
-Data sources:
-  parasitic / interference : {00_baseline,final_alpha}/*_ParasiteBuildUp.csv
-                              (Raymer Ch.12 method, drag_buildup.py's Q table)
-  induced                  : {00_baseline,final_alpha}/*.polar, Trefftz-plane
-                              CDiw vs CL^2 fit
-  pitching moment          : component_moment_results.json, leave-one-out
-                              buildup (component_moment.py)
-
-Produces: v6_drag_moment_compare.png (2x2)
-"""
+"""v5->v6 comparison: parasitic/induced/interference drag + per-component pitching-moment buildup. "v5" here is v5-equivalent (v6's closed-tail fuselage + v5's documented tail areas) so the tail-resizing effect isn't conflated with the fuselage-closure fix (v5.vsp3's actual open tail corrupts CMy, doubts.md #26). Data: parasitic/interference from drag_buildup.py's Q table, induced from Trefftz CDiw vs CL^2, moment from component_moment.py's leave-one-out buildup. Produces v6_drag_moment_compare.png."""
 import json
 import os
 

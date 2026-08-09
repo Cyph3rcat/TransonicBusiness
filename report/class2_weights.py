@@ -1,20 +1,4 @@
-"""Chapter 8 -- refined (Class-II) weight estimate and CG envelope.
-
-Method: Raymer Ch.15 "General Aviation Weights" set, Eqs. (15.46)-(15.59),
-which is the set the AAE5203 Week 9 deck points at (Raymer Section 15.3.1).
-The GA set is used rather than the transport/cargo set because at 11,660 lb
-this aircraft is an order of magnitude below the transport equations' fit
-population -- the same class-mismatch argument that drove the tail-sizing
-divergence in Chapter 6.
-
-Every geometric input is the as-built full_v7 OpenVSP model. Wetted areas come
-from the OpenVSP ParasiteDrag module output that also feeds Chapter 9, so the
-weight and drag chapters are dimensionally consistent by construction.
-
-Outputs the group weight statement, the empty weight, and a proper
-loading-sequence CG envelope (not just the four corner states the Class-I
-buildup reported).
-"""
+"""Chapter 8 -- Class-II weight estimate (Raymer GA set, Eqs 15.46-15.59, used because this aircraft is below the transport-equation fit population) and loading-sequence CG envelope."""
 import json
 import math
 import os
@@ -41,9 +25,7 @@ SW, AR_W, SWEEP_W, TAPER_W, TC_W, BW = 193.678, 8.9095, 18.5, 0.35, 0.12, 41.532
 SHT, AR_HT, SWEEP_HT, TAPER_HT, TC_HT = 29.10, 4.4706, 20.0, 0.4783, 0.10
 # Vertical tail (T-tail, so Ht/Hv = 1.0)
 SVT, AR_VT, SWEEP_VT, TAPER_VT, TC_VT, HT_HV = 43.20, 1.0659, 35.0, 0.6052, 0.10, 1.0
-# Fuselage: wetted areas from final_alpha_ParasiteBuildUp.csv. The belly
-# fairing is included because it carries the wing centre section and the main
-# gear bays -- it is fuselage primary structure, not a fairing bolted on.
+# Fuselage: wetted areas from final_alpha_ParasiteBuildUp.csv; belly fairing included as primary structure (carries wing centre section & gear bays), not a bolted-on fairing.
 S_FUSE, S_FAIRING = 534.556, 121.717
 SF = S_FUSE + S_FAIRING
 L_STRUCT = 39.0                # ft, 42.2 total less radome and tail cap
@@ -126,8 +108,7 @@ W_ac = 0.265 * MTOW ** 0.52 * N_PERS ** 0.68 * W_avionics ** 0.17 * MACH ** 0.08
 # ----------------------------------------------------- (15.59) furnishings
 W_furn = 0.0582 * MTOW - 65.0
 
-# Arms, ft aft of the nose. Structural groups sit at their own centroids; the
-# wing/fuel arms are the 40% MAC convention carried from weight.md 3.
+# Arms, ft aft of the nose; wing/fuel arms use the 40% MAC convention carried from weight.md 3.
 X_LEMAC, MAC = 17.734, 5.0237
 groups = [
     ("Wing",                 W_wing,     X_LEMAC + 0.40 * MAC, "15.46"),
@@ -189,8 +170,7 @@ X_FUEL = X_LEMAC + 0.40 * MAC
 LOAD = {"crew": (400.0, 7.50), "pax_fwd": (540.0, 14.50), "pax_aft": (540.0, 19.50),
         "bag_nose": (60.0, 5.00), "bag_aft": (180.0, 27.00), "fuel": (W_FUEL, X_FUEL)}
 
-# Two loading orders bracket the envelope: payload-first (drives it forward as
-# the cabin fills from the front) and fuel-first.
+# Two loading orders bracket the envelope: payload-first and fuel-first.
 sequences = {
     "fwd-critical: crew, nose bag, fwd pax, fuel, aft pax, aft bag":
         ["crew", "bag_nose", "pax_fwd", "fuel", "pax_aft", "bag_aft"],
@@ -223,13 +203,7 @@ print(f"\n  measured neutral point x_np = {X_NP:.3f} ft = {pct(X_NP):.1f}% MAC")
 print(f"  static margin at forward CG = {(X_NP - fwd[2]) / MAC * 100:.1f}% MAC")
 print(f"  static margin at aft CG     = {(X_NP - aft[2]) / MAC * 100:.1f}% MAC")
 
-# ------------------------------------------------------------------------
-# The iteration the course asks for (Week 10, slide 9): the horizontal tail
-# was sized in Chapter 6 against the Class-I *point* CG. With a real loading
-# sequence the aft limit moves aft, and the static margin there is what has to
-# clear the floor -- so S_HT is re-solved against the aft limit, with the tail
-# weight fed back into the CG because it sits on the longest arm in the
-# aircraft.
+# The tail was sized in Chapter 6 against the Class-I point CG; re-solve S_HT against the real aft CG limit found above, feeding the changed tail weight back into the CG.
 SM_FLOOR = 0.10                 # MAC fraction, conventional civil-jet minimum
 DNP_DSHT = 0.05912              # ft per ft^2, measured slope (report/v7_results.py)
 X_HT_ARM = 38.20                # ft, HT group arm
@@ -239,8 +213,7 @@ print(f"\n  --- horizontal tail re-check against the aft CG limit ---")
 print(f"  static margin at the aft limit is {100 * sm_aft_now:.1f}% MAC against a "
       f"{100 * SM_FLOOR:.0f}% floor")
 if sm_aft_now < SM_FLOOR:
-    # Everything except the horizontal tail, frozen once: weight and moment of
-    # the aft-limit loading with the tail group removed.
+    # Weight and moment of the aft-limit loading with the tail group removed, frozen once.
     w_rest = aft[1] - W_ht
     m_rest = aft[1] * aft[2] - W_ht * X_HT_ARM
     s_ht = SHT

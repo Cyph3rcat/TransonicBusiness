@@ -1,13 +1,4 @@
-"""Stage 1 figures: drag rise, polars, lift curves, and the CD0/e split.
-
-Reads dragrise_analysis.json (written by analyze_dragrise.py) plus the raw
-per-point history CSVs, and emits one PNG per figure into this directory.
-
-Deliberately plots the fit residual alongside the results: past M0.80 the
-polar model (CD = CD0 + k*CL^2) stops describing the flow, and any figure
-that shows CD0/e out there without showing that it has stopped fitting is
-lying by omission.
-"""
+"""Stage 1 figures (drag rise, polars, lift curves, CD0/e split) from dragrise_analysis.json + raw history CSVs; deliberately plots the fit residual alongside the results since past M0.80 the polar model (CD=CD0+k*CL^2) stops describing the flow, and showing CD0/e out there without that context would be lying by omission."""
 import json
 import os
 

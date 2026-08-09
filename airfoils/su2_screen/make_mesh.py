@@ -1,9 +1,4 @@
-"""
-Generate an O-grid CFD mesh (unstructured triangles + boundary-layer wedge)
-around a 2D airfoil from Selig-format coordinates, export to SU2 format.
-
-Usage: python3 make_mesh.py <coords.dat> <output_name> [hwall]
-"""
+"""Generate an O-grid CFD mesh (unstructured triangles + boundary-layer wedge) around a 2D airfoil from Selig-format coordinates, exported to SU2 format."""
 import sys
 import math
 import gmsh
@@ -33,15 +28,13 @@ def build_mesh(datfile, name, hwall=5e-6, farfield_r=25.0):
     gmsh.initialize()
     gmsh.model.add(name)
 
-    # airfoil surface points
     pt_tags = []
     lc_af = 1.0  # controlled by fields, not point lc
     for (x, y) in pts:
         t = gmsh.model.geo.addPoint(x, y, 0, lc_af)
         pt_tags.append(t)
 
-    # spline through all points; for a sharp-TE (closed) section, loop back to
-    # the first point tag so the spline itself is the whole closed boundary
+    # closed (sharp-TE) sections loop the spline back to the first point tag so it forms the whole boundary
     loop_pts = pt_tags + [pt_tags[0]] if closed else pt_tags
     spline = gmsh.model.geo.addSpline(loop_pts)
     curves = [spline]
@@ -51,7 +44,6 @@ def build_mesh(datfile, name, hwall=5e-6, farfield_r=25.0):
 
     af_loop = gmsh.model.geo.addCurveLoop(curves)
 
-    # farfield circle centered at (0.5, 0)
     cx, cy = 0.5, 0.0
     c0 = gmsh.model.geo.addPoint(cx, cy, 0, farfield_r)
     c_n = gmsh.model.geo.addPoint(cx, cy + farfield_r, 0, farfield_r)
@@ -72,7 +64,6 @@ def build_mesh(datfile, name, hwall=5e-6, farfield_r=25.0):
     gmsh.model.addPhysicalGroup(1, [arc1, arc2, arc3, arc4], name="farfield")
     gmsh.model.addPhysicalGroup(2, [surf], name="fluid")
 
-    # --- mesh size fields ---
     dist = gmsh.model.mesh.field.add("Distance")
     gmsh.model.mesh.field.setNumbers(dist, "CurvesList", curves)
     gmsh.model.mesh.field.setNumber(dist, "Sampling", 400)
@@ -84,7 +75,6 @@ def build_mesh(datfile, name, hwall=5e-6, farfield_r=25.0):
     gmsh.model.mesh.field.setNumber(thr, "DistMin", 0.03)
     gmsh.model.mesh.field.setNumber(thr, "DistMax", farfield_r * 0.8)
 
-    # boundary layer around airfoil
     bl = gmsh.model.mesh.field.add("BoundaryLayer")
     gmsh.model.mesh.field.setNumbers(bl, "CurvesList", curves)
     gmsh.model.mesh.field.setNumber(bl, "hwall_n", hwall)
@@ -113,8 +103,7 @@ def build_mesh(datfile, name, hwall=5e-6, farfield_r=25.0):
 
 
 def write_su2(m, path):
-    """Manual SU2 mesh writer (meshio's built-in su2 writer is broken for this
-    meshio version's CellBlock API), using physical group names from gmsh."""
+    """Manual SU2 mesh writer: meshio's built-in su2 writer is broken for this meshio version's CellBlock API."""
     # map physical-group name -> physical tag id, from gmsh field_data
     name_to_tag = {nm: tags[0] for nm, tags in m.field_data.items()}
     tag_to_name = {v: k for k, v in name_to_tag.items()}

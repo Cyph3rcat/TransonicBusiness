@@ -33,8 +33,7 @@ with open(path) as fh:
         if line.startswith("v "):
             V.append([float(t) for t in line.split()[1:4]])
 V = np.asarray(V)
-# fuselage centerline points only: |y| tiny and exclude belly fairing verts
-# (fairing z < -2.0 in its own band x=16..30.5 near centerline bottom)
+# fuselage centerline points only (|y| tiny); belly-fairing verts (z<-2.0, x=16-30.5) get dropped separately below
 sel = np.abs(V[:, 1]) < 1e-3
 pts = V[sel]
 x, z = pts[:, 0], pts[:, 2]

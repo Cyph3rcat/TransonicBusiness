@@ -1,21 +1,4 @@
-"""
-Live terminal dashboard for the SC(2)-0412 v2 adaptive Mach sweep.
-
-Polls whichever log_sc20412_v2_M*.txt was most recently written (i.e. the
-currently-running point), parses the same iteration-row format
-adaptive_sweep_v2.py itself parses, and redraws a single-screen status view:
-which Mach point we're on (i/7), an iteration progress bar against the
-ITER=4500 cap, live rms_rho/CL/CD, and an ETA estimated from the observed
-iterations/sec of the current run.
-
-Pure stdlib -- no pip installs needed, safe to run with the system python3
-inside WSL (the venv with gmsh/meshio is NOT needed for this).
-
-Run (inside WSL, from the working directory):
-    python3 monitor_sweep.py
-Or from Windows, without opening a WSL shell yourself:
-    wsl -d Ubuntu -e bash -lc "cd /home/cyph3r/mses_replacement/mach_sweep_v2 && python3 monitor_sweep.py"
-"""
+"""Live terminal dashboard for the SC(2)-0412 v2 adaptive Mach sweep -- pure stdlib, no pip installs needed, safe to run with the system python3 inside WSL (the gmsh/meshio venv isn't needed here)."""
 import re
 import sys
 import time

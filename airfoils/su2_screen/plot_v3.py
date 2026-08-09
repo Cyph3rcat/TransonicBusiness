@@ -1,11 +1,4 @@
-"""
-Final v3 results figure: constant-CL drag rise with error bars, M_crit
-Cp-crossing, and the implied sweep -- with v1 (retracted) and the external
-literature anchors overlaid so the triangulation is visible, not asserted.
-
-Reads mach_sweep_sc20412_v3/results_v3.json (extract_v3.py output) and the
-v1 results for comparison.
-"""
+"""Final v3 results figure: constant-CL drag rise with error bars, M_crit Cp-crossing, and implied sweep, with v1 (retracted) and literature anchors overlaid."""
 import json
 import sys
 from pathlib import Path
@@ -39,7 +32,6 @@ fig, axes = plt.subplots(1, 3, figsize=(16, 5.2))
 fig.suptitle("SC(2)-0412 v3 (JST, cold-start, constant $C_L$=0.248): defensible $M_{crit}$ / $M_{dd}$",
              fontsize=12.5)
 
-# --- Panel 1: constant-CL drag rise ---
 ax = axes[0]
 ax.errorbar(machs, cds, yerr=cd_stds, fmt="o-", color="#d62728", lw=1.8, ms=5,
             capsize=3, label="v3: $C_D(M)$ at $C_L$=0.248 (±1σ window)")
@@ -65,7 +57,6 @@ ax.legend(fontsize=8, loc="upper left")
 ax.grid(alpha=0.3)
 ax.set_ylim(0, 300)
 
-# --- Panel 2: Cp_min crossing ---
 ax = axes[1]
 m_dense = np.linspace(0.55, 0.85, 300)
 ax.plot(m_dense, cp_critical(m_dense), "k--", lw=1.3, label="$Cp_{cr}(M)$ (sonic)")
@@ -86,7 +77,6 @@ ax.legend(fontsize=8, loc="upper right")
 ax.grid(alpha=0.3)
 ax.invert_yaxis()
 
-# --- Panel 3: implied sweep ---
 ax = axes[2]
 entries = [
     ("v1 $M_{dd}$=0.712\n(RETRACTED)", np.degrees(np.arccos(0.7122 / M_CRUISE)), "0.7"),

@@ -1,32 +1,4 @@
-"""
-Visualize the SC(2)-0412 transonic screen: SU2 CFD Mach sweep vs the
-Prandtl-Glauert + critical-Cp approximation, and the sweep angle each
-method implies via simple sweep theory.
-
-Reads only files already produced by this project's own pipeline --
-no new analysis is done here, this is strictly a plotting/reporting layer:
-  airfoils/results_critical_mach_pg.json                    (PG method, both candidates)
-  airfoils/su2_screen/mach_sweep_sc20412/results_su2_sweep_sc20412.json  (CFD Cp_min/Cd vs M, M_crit, M_dd)
-  airfoils/su2_screen/mach_sweep_sc20412/adaptive_sweep_results.json    (per-point CL/AoA/freestream)
-  airfoils/dat_clean/sc20412_selig.dat                       (airfoil geometry, cleaned Selig format)
-
-Background (see config.md B.5.2 / airfoils/su2_screen/README.md for the full writeup):
-  - M_crit is found where the CFD (or PG-extrapolated) Cp_min(M) curve first
-    crosses the isentropic critical-Cp curve Cp_cr(M) -- the Mach at which local
-    flow first touches sonic anywhere on the section.
-  - M_dd ("drag divergence") is found from the Cd(M) "hockey stick": the first
-    Mach where dCd/dM sustains >= 0.10 (the "Boeing criterion") for 2 consecutive
-    sweep intervals, i.e. where the shock has grown enough to actually cost drag,
-    not just exist.
-  - Both are converted to a required 25%-chord sweep via simple sweep theory,
-    Lambda25 = arccos(M_ref / M_cruise), M_cruise = 0.80.
-  - The project adopted the M_dd basis (27.1 deg) over the literal M_crit basis
-    (39.6 deg) as the practical sweep driver -- kept here as parallel bars so the
-    magnitude of that choice is visible, not just stated.
-
-Run: python plot_sc20412_results.py
-Requires: numpy, matplotlib
-"""
+"""SC(2)-0412 transonic screen: SU2 CFD Mach sweep vs Prandtl-Glauert approximation, plus the 25%-chord sweep each M_crit/M_dd basis implies -- the project adopted the M_dd basis (27.1 deg) over the literal M_crit basis (39.6 deg), see config.md B.5.2."""
 import json
 from pathlib import Path
 
@@ -65,8 +37,7 @@ def load_airfoil_coords(path: Path) -> np.ndarray:
 
 
 def sweep_for_mach(m_ref: float, m_cruise: float = M_CRUISE) -> float:
-    """Lambda25 = arccos(M_ref / M_cruise), the quarter/25%-chord sweep that delays
-    the effective section Mach seen by the wing back down to m_ref at m_cruise."""
+    """Lambda25 = arccos(M_ref/M_cruise): 25%-chord sweep needed to bring the effective section Mach back down to m_ref at cruise."""
     return np.degrees(np.arccos(min(m_ref / m_cruise, 1.0)))
 
 
@@ -87,7 +58,6 @@ def main():
     m_crit_pg412 = pg412["M_crit_PG"]
     cpmin0_412 = pg412["Cpmin_0 (incompressible)"]
 
-    # ---- printed table (console) ----
     print(f"{'M':>8} {'CD':>10} {'Cp_min (CFD)':>14} {'Cp_cr(M)':>10} {'AoA0 (deg)':>11} {'CL':>8}")
     for p, a in zip(su2["points"], adaptive):
         print(f"{p['mach']:8.4f} {p['cd']:10.5f} {p['cp_min']:14.4f} "
@@ -97,11 +67,9 @@ def main():
     print(f"M_crit (PG, SC(2)-0412) = {m_crit_pg412:.4f}   ->  Lambda25 = {sweep_for_mach(m_crit_pg412):.1f} deg")
     print(f"M_crit (PG, SC(2)-0414) = {pg414['M_crit_PG']:.4f}   ->  Lambda25 = {sweep_for_mach(pg414['M_crit_PG']):.1f} deg")
 
-    # ---- figure ----
     fig, axes = plt.subplots(2, 2, figsize=(12, 9))
     fig.suptitle("NASA SC(2)-0412 -- SU2 CFD Mach Sweep vs Prandtl-Glauert Approximation", fontsize=13)
 
-    # (1) airfoil geometry
     ax = axes[0, 0]
     ax.plot(coords[:, 0], coords[:, 1], color="#1f77b4", lw=1.5)
     ax.set_aspect("equal")
@@ -110,7 +78,6 @@ def main():
     ax.set_ylabel("y/c")
     ax.axhline(0, color="0.85", lw=0.6, zorder=0)
 
-    # (2) Cp_min vs Mach: CFD points, PG curve, Cp_cr(M) theory curve, both M_crit crossings
     ax = axes[0, 1]
     m_dense = np.linspace(0.3, 0.85, 400)
     ax.plot(m_dense, cp_critical(m_dense), "k--", lw=1.3, label=r"$Cp_{cr}(M)$ (isentropic, sonic condition)")
@@ -129,7 +96,6 @@ def main():
     ax.legend(fontsize=8, loc="lower left")
     ax.invert_yaxis()
 
-    # (3) Cd vs Mach: the drag-divergence "hockey stick" and Boeing-criterion slope
     ax = axes[1, 0]
     ax.plot(machs, cds * 1e4, "o-", color="#d62728", lw=1.5, ms=5, label="SU2 CFD $C_D(M)$")
     ax.axvline(m_dd_cfd, color="#d62728", ls=":", lw=1.2)
@@ -142,7 +108,6 @@ def main():
     ax.set_title(r"$M_{dd}$: sustained $dC_D/dM \geq 0.10$ (\"Boeing criterion\")")
     ax.legend(fontsize=8)
 
-    # (4) Sweep angle implied by each method/reference Mach
     ax = axes[1, 1]
     methods = [
         ("PG\nSC(2)-0412", m_crit_pg412, "#ff7f0e"),

@@ -1,19 +1,4 @@
-"""Adaptive Mach sweep for SC(2)-0412 only (2026-08-04 plan revision).
-
-Runs SU2 sequentially at increasing Mach, fixed AoA per point (Prandtl-Glauert
--corrected estimate, no FIXED_CL_MODE -- see gen_configs_machsweep.py's
-docstring for why FIXED_CL_MODE was dropped), and stops adaptively once the
-Cd(M) "hockey stick" (drag-divergence knee) is clearly resolved, instead of
-committing to a fixed point count upfront.
-
-Retuned convergence tolerance (real observed plateau is rms_rho~-3.0 to -3.1,
-not the old CONV_RESIDUAL_MINVAL=-10; CD was still slowly drifting at
-iteration 4000 under the old CONV_CAUCHY_EPS=5E-7, which never triggered
-early exit) -- see plan file status update for the full rationale.
-
-Run from the mach_sweep working directory (has sc20412.su2 already):
-    python3 adaptive_sweep.py
-"""
+"""Adaptive Mach sweep for SC(2)-0412: fixed AoA per point (PG-corrected estimate, no FIXED_CL_MODE -- see gen_configs_machsweep.py), stops once the Cd(M) hockey stick is resolved instead of committing to a fixed point count."""
 import json
 import math
 import re
@@ -33,15 +18,11 @@ GAMMA = 1.4
 MACH_START = 0.5922  # already have this point from the first (over-converged) run
 MACH_STEP = 0.03
 MAX_POINTS = 7
-# "Boeing criterion" for drag-divergence Mach: dCd/dM = 0.1 (standard, absolute --
-# NOT relative to a "baseline" slope. A relative/ratio criterion breaks down here
-# because CD does not monotonically rise from the first point -- observed CD
-# actually DROPPED between the first two points (0.0272 -> 0.0052, slope -0.73),
-# so any ratio-to-baseline test is undefined/misleading whenever the baseline
-# itself is negative or near zero. An absolute threshold has no such failure mode.
+# Boeing criterion: dCd/dM=0.10 absolute, not relative-to-baseline -- CD dropped between the first two points here, which would undefine any ratio test
 DCD_DM_THRESHOLD = 0.10
-CONSECUTIVE_NEEDED = 2  # how many intervals in a row must exceed threshold before stopping
+CONSECUTIVE_NEEDED = 2
 
+# Retuned convergence: real plateau is rms_rho~-3.0 (not the old CONV_RESIDUAL_MINVAL=-10); CD was still drifting at the old CONV_CAUCHY_EPS=5E-7
 TEMPLATE = """\
 SOLVER= RANS
 KIND_TURB_MODEL= SST

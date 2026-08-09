@@ -1,14 +1,4 @@
-"""Design the full_v5 fuselage lines before committing them to the vspscript.
-
-Goals (user brief 2026-08-05):
-- nose must taper DOWN to a low tip (Phenom 300 look, not Airbus): tip well
-  below the fuselage centerline, top line falling steeply, bottom line nearly flat
-- everything C1-tangent at the barrel (no creases), monotone top line aft
-- few, well-spaced stations so the OpenVSP skinning spline doesn't ripple
-  (v4 used 8 nose stations and the loft oscillated between them)
-
-Prints the station table for the vspscript and writes a profile plot.
-"""
+"""full_v5 fuselage station-table design (brief 2026-08-05): nose droops to a Phenom-300-style low tip, C1-tangent at the barrel; few well-spaced stations to avoid the v4 skinning-spline ripple (8 nose stations oscillated). Prints the station table + profile plot."""
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -33,16 +23,13 @@ def nose_zc(x):
     return Z_tip_nose * (1.0 - x / L_nc) ** P_Z
 
 # ---- tail cone: build TOP and BOTTOM lines directly, derive h and zc ----
-# top: gentle monotone fall 3.05 -> Z_tip_tail, tangent at the barrel
-# bottom: tangent blend over the first 35% of the cone, then CONSTANT slope to
-#   the tip (this is what v4's realized stations looked like; a cosine-height
-#   law stays too full mid-body and then closes at 25 deg)
+# top: monotone fall 3.05 -> Z_tip_tail, tangent at barrel
+# bottom: tangent blend over first 35% then constant slope to tip (matches v4's realized shape; a cosine-height law stayed too full mid-body)
 L_t = L - X_te
 S_BLEND = 0.35
 
 def _f_bottom(s):
-    # integral of a slope profile that smoothsteps 0->1 over [0, S_BLEND] then
-    # holds 1; normalized so f(1) = 1
+    # integral of a slope profile that smoothsteps 0->1 over [0,S_BLEND] then holds 1, normalized so f(1)=1
     s = np.atleast_1d(s)
     sb = np.clip(s / S_BLEND, 0.0, 1.0)
     # integral of smoothstep(t) = t^3 - t^4/2 evaluated in stretched coords
@@ -85,13 +72,7 @@ print("mean lower-line upsweep 26.5-40.5 (deg):", up[m].mean())
 print("max  lower-line upsweep (deg):", up.max())
 
 # ---- station tables ----
-# Iteration history (measured in ripple_metric.py, top-line max |mesh-analytic|):
-#   7 nose stations, non-uniform    -> 0.21 ft ripple
-#   13 nose stations, non-uniform   -> 0.054 ft
-#   36 stations, UNIFORM 1.2 ft     -> 0.127 ft (worse: uniformity is not the
-#                                      mechanism, local density is)
-# Overshoot scales ~spacing^2, so: <=0.45 ft spacing where the nose is highly
-# curved, 0.6-0.8 ft through the tail cap.
+# ripple scales ~spacing^2 (measured in ripple_metric.py): local density matters, not uniformity -- keep <=0.45 ft spacing where the nose is highly curved, 0.6-0.8 ft through the tail cap
 xs_nose = [0.0, 0.25, 0.55, 0.9, 1.3, 1.75, 2.2, 2.65, 3.1, 3.55, 4.0, 4.45,
            4.9, 5.4, 5.9, 6.5, 7.2, 8.0, 8.8, 9.6, L_nc]
 xs_barrel = [12.0, 14.0, 16.0, 18.0, 20.0, 21.7, X_te]

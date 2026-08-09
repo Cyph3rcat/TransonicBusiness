@@ -1,33 +1,4 @@
-"""Chapter 11 -- airplane pricing and economics.
-
-Method: Raymer Ch.18, the modified RAND DAPCA IV cost model, driven by the
-Chapter 8 Class-II empty weight and the Chapter 10 cruise speed and fuel burn.
-Specifically:
-
-  Raymer Eq. (18.1)-(18.4)   engineering / tooling / manufacturing / QC hours
-  Raymer Eq. (18.5)-(18.7)   development support, flight test, mfg materials
-  Raymer Eq. (18.8)          turbojet-engine production cost
-  Raymer Eq. (18.9)          RDT&E + flyaway summation
-  Raymer Ch.18 wrap rates    R_E 115, R_T 118, R_Q 108, R_M 98 (2012 $/hr)
-  Raymer Eq. (18.10)         two-man crew cost per block hour
-  Raymer Eq. (18.12)/(18.13) maintenance materials per flight hour / per cycle
-  Raymer Table 18.1          business-jet utilisation and MMH/FH bands
-
-Two things this script does that the bare model does not:
-
-  1. It splits the DAPCA-estimated terms from the two purchased-equipment
-     terms (engines, avionics). Raymer's +20%/-10% modern-design and
-     commercial-aircraft adjustments are applied ONLY to the DAPCA terms,
-     because engines and avionics are not DAPCA estimates at all.
-  2. It reports the implied calibration against the competitive set rather
-     than silently applying Raymer's "GA costs are reasonable after being
-     divided by four" folk factor. The gap is the result, not an embarrassment
-     to be adjusted away.
-
-All DAPCA output is in 2012 dollars and is escalated with a single CPI factor.
-
-Run:  python report/economics.py
-"""
+"""Chapter 11 -- pricing and economics (Raymer Ch.18 modified DAPCA IV); the +20%/-10% modern-design/commercial adjustments apply only to DAPCA-estimated terms, not to purchased engines/avionics, and the calibration against the competitive set is reported rather than folded away with Raymer's "divide GA by 4" folk factor."""
 import json
 import math
 import os
@@ -52,8 +23,7 @@ TIT_BAND = (2200.0, 2300.0, 2400.0, 2500.0, 2600.0)
 TURBOFAN_UPLIFT = 1.18       # Raymer: raise Eq.(18.8) by 15-20% for a turbofan
 
 # Purchased equipment.
-W_UAV = 300.0                # lb, UNINSTALLED avionics (the Ch.15 input, not
-                             # the 433 lb installed group weight)
+W_UAV = 300.0                # lb, UNINSTALLED avionics (the Ch.15 input, not the 433 lb installed group weight)
 AVIONICS_PER_LB = 6000.0     # 2012 $/lb, midpoint of Raymer's $4,000-$8,000
 INTERIOR_PER_PAX = 3500.0    # 2012 $, Raymer's jet-transport allowance
 
@@ -66,20 +36,18 @@ FTA = 3                      # flight-test aircraft (Raymer: typically 2-6)
 R_ENG, R_TOOL, R_QC, R_MFG = 115.0, 118.0, 108.0, 98.0
 
 # Adjustment factors (Raymer Ch.18, applied to DAPCA-estimated terms only).
-F_MATERIAL = 1.0             # aluminium airframe, consistent with the Ch.15
-                             # weight equations which are aluminium-based
+F_MATERIAL = 1.0             # aluminium airframe, consistent with the Ch.15 weight equations
 F_MODERN = 1.2               # "adjust for more modern designs"
 F_COMMERCIAL = 0.9           # "DAPCA tends to overpredict commercial aircraft"
 F_DAPCA = F_MATERIAL * F_MODERN * F_COMMERCIAL
 
-# Escalation. CPI-U annual average 2012 = 229.594 (BLS). The 2026 figure is
-# an extrapolation, not a published annual average, and is flagged as such.
+# Escalation. CPI-U annual average 2012 = 229.594 (BLS); the 2026 figure is an extrapolation, not a published annual average.
 CPI_2012, CPI_2026 = 229.594, 330.0
 ESC = CPI_2026 / CPI_2012
 
 # Operations.
-UTIL_BASE = 500.0            # flight hours per year -- Raymer Table 18.1 gives
-UTIL_BAND = (300.0, 500.0, 800.0, 1200.0)      # 500-2000 for a business jet
+UTIL_BASE = 500.0            # flight hours per year
+UTIL_BAND = (300.0, 500.0, 800.0, 1200.0)      # Raymer Table 18.1: 500-2000 for a business jet
 MMH_FH = 4.0                 # Raymer Table 18.1: 3-6 for a business jet
 MMH_BAND = (3.0, 4.0, 6.0)
 FUEL_PRICE = 6.00            # 2026 $/US gal, Jet-A at a US FBO -- ASSUMPTION
@@ -90,8 +58,7 @@ RESALE_FRACTION = 0.10
 DEPREC_YEARS_ENG = 4         # Raymer's engine schedule -- challenged below
 ENGINE_TBO_HR = 4000.0       # h between overhauls -- ASSUMPTION, class-typical
 ENGINE_OVERHAUL_FRAC = 0.35  # overhaul cost as a fraction of new engine price
-SINGLE_PILOT_FACTOR = 0.55   # PLACEHOLDER -- Eq. (18.10) has no single-pilot
-                             # form; see the note printed in §11.6(d)
+SINGLE_PILOT_FACTOR = 0.55   # PLACEHOLDER -- Eq. (18.10) has no single-pilot form; see the note in §11.6(d)
 INVESTMENT_FACTOR = 1.20     # Raymer: 1.1-1.4, cost of money plus profit
 INVESTMENT_BAND = (1.1, 1.2, 1.4)
 
@@ -120,8 +87,7 @@ def engine_cost_2012(tit=TIT_R):
 
 
 def dapca(Q, tit=TIT_R, f_dapca=F_DAPCA):
-    """Modified DAPCA IV. Returns a dict of 2012-dollar cost elements for the
-    whole program of Q aircraft, plus the derived per-aircraft figures."""
+    """Modified DAPCA IV: 2012-dollar cost elements for Q aircraft, plus derived per-aircraft figures."""
     H_E = 4.86 * W_E ** 0.777 * V_MAX ** 0.894 * Q ** 0.163      # Eq. 18.1
     H_T = 5.99 * W_E ** 0.777 * V_MAX ** 0.696 * Q ** 0.263      # Eq. 18.2
     H_M = 7.37 * W_E ** 0.820 * V_MAX ** 0.484 * Q ** 0.641      # Eq. 18.3
@@ -233,8 +199,7 @@ for f in INVESTMENT_BAND:
           f"{base['unit_2026'] * f / 1e6:6.2f} M (2026 $)")
 PRICE = base["unit_2026"] * INVESTMENT_FACTOR
 
-# The competitive set. These are approximate list prices, carried from the
-# Chapter 1 market survey; they are ASSUMPTION-grade, not audited.
+# Approximate list prices carried from the Chapter 1 market survey; ASSUMPTION-grade, not audited.
 COMPETITORS = [("HondaJet Elite II", 5.5e6, 11100.0),
                ("Embraer Phenom 300E", 10.5e6, 18387.0),
                ("Cessna Citation CJ4 Gen3", 12.0e6, 17110.0)]
@@ -244,12 +209,7 @@ for name, p, w in COMPETITORS:
 print(f"  {'THIS DESIGN (DAPCA)':<28}{PRICE / 1e6:15.1f}{MTOW:11,.0f}"
       f"{PRICE / MTOW:12,.0f}")
 
-# Two benchmarks, because the two obvious ways to price this aircraft against
-# the competitive set disagree, and the disagreement is itself informative.
-#   (i)  by weight   -- what the market pays per pound of MTOW
-#   (ii) by capability -- the aircraft is specified to CJ4/Phenom mission
-# The design's whole premise is CJ4 capability at HondaJet weight, so (i) is a
-# floor and (ii) is a ceiling. Neither alone is the answer.
+# Two benchmarks bracket the price: (i) by weight, $/lb MTOW = floor; (ii) by capability, CJ4/Phenom mission parity = ceiling. The design's premise is CJ4 capability at HondaJet weight, so neither alone is the answer.
 per_lb = sum(p / w for _, p, w in COMPETITORS) / len(COMPETITORS)
 PRICE_BENCH_LOW = per_lb * MTOW
 PRICE_BENCH_HIGH = 12.0e6                      # CJ4 Gen3, capability parity
@@ -301,12 +261,7 @@ def crew_cost_block_hr_2012():
 def doc(price_2026, util=UTIL_BASE, fuel_price=FUEL_PRICE, mmh=MMH_FH,
         t_fl=None, t_bl=None, two_crew=True, engine_method="overhaul",
         calibration=None):
-    """Direct operating cost, dollars per flight hour, 2026 dollars.
-
-    `calibration` scales the DAPCA engine price down by the same factor §11.4
-    found between the DAPCA aircraft price and the market. Without it the model
-    charges $4.2M of engines against a $9.4M aeroplane, which is not a coherent
-    aircraft, and engine depreciation swamps every other line."""
+    """Direct operating cost, $/flight hour, 2026 dollars; `calibration` scales the DAPCA engine price by the same §11.4 factor so the depreciated aircraft is coherent (otherwise it charges $4.2M of engines against a $9.4M aeroplane)."""
     t_fl = t_flight if t_fl is None else t_fl
     t_bl = t_block if t_bl is None else t_bl
     cal = CALIBRATION if calibration is None else calibration
@@ -320,8 +275,7 @@ def doc(price_2026, util=UTIL_BASE, fuel_price=FUEL_PRICE, mmh=MMH_FH,
     crew_2012 = crew_cost_block_hr_2012() * (1.0 if two_crew else SINGLE_PILOT_FACTOR)
     crew = crew_2012 * ESC * (t_bl / t_fl)
 
-    # Maintenance labour: MMH/FH x wrap rate. Raymer: "in the absence of better
-    # data, the labour cost can be approximated by the manufacturing wrap-rate."
+    # Maintenance labour: MMH/FH x wrap rate (Raymer: approximated by the manufacturing wrap-rate absent better data).
     m_lab = mmh * R_MFG * ESC
 
     # Maintenance materials, Eq. (18.12) per flight hour + (18.13) per cycle.
@@ -349,10 +303,7 @@ def doc(price_2026, util=UTIL_BASE, fuel_price=FUEL_PRICE, mmh=MMH_FH,
                 c_a_2012=c_a, c_e_2026=c_e_2026)
 
 
-# DOC is built at the market-anchored price, not the DAPCA price: an operator
-# pays what the aeroplane sells for, and §11.4 has just shown the DAPCA price
-# is not what it would sell for. The engine price is scaled by the same factor,
-# so that the aircraft the operator is depreciating is a coherent one.
+# DOC is built at the market-anchored price, not the DAPCA price (§11.4 showed DAPCA overpredicts what the aeroplane would sell for); engine price is scaled the same way for a coherent depreciated aircraft.
 d = doc(PRICE_MARKET)
 print(f"\n  built at the market-anchored price of {PRICE_MARKET / 1e6:.2f} M, with the")
 print(f"  engine price scaled by the same {CALIBRATION:.2f}x -> "

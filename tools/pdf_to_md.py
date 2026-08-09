@@ -1,16 +1,4 @@
-"""Convert the repo's text-layer PDFs to markdown under refs/.
-
-Text-layer PDFs only. The lecture-slide decks are image-only (their figures are
-embedded bitmaps, not text) and are transcribed by hand into refs/lectureslides/
-instead -- see that directory's README.
-
-Raymer is split per chapter rather than emitted as one 1097-page file, so a
-chapter can be read or grepped without loading the whole book. Printed page
-numbers are preserved as `<!-- p.N -->` markers because every citation in
-config.md / doubts.md refers to printed pages, not PDF indices.
-
-Usage:  python tools/pdf_to_md.py
-"""
+"""Converts the repo's text-layer PDFs to markdown under refs/ (image-only lecture decks are transcribed by hand instead, see refs/lectureslides/README); Raymer is split per chapter with printed-page `<!-- p.N -->` markers since config.md/doubts.md cite printed pages, not PDF indices."""
 import os
 import re
 import sys
@@ -20,8 +8,7 @@ import pypdf
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "refs")
 
-# Raymer: PDF page index = printed page + 29 (verified against printed p.96/97
-# at indices 125/126). Chapter start pages are from the book's own contents.
+# Raymer: PDF page index = printed page + 29 (verified against printed p.96/97 at indices 125/126).
 RAYMER = ("Daniel P. Raymer - Aircraft Design_ A Conceptual Approach "
           "(2018, American Institute of Aeronautics and Astronautics Inc.) - libgen.li.pdf")
 RAYMER_OFFSET = 29

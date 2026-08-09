@@ -1,9 +1,4 @@
-"""Figures for Chapters 5-6: airfoils, drag divergence, wing and tail.
-
-Every curve here is read from a solver output file: SU2 surface CSVs and the
-extracted results_v3.json for the 2-D work, VSPAERO .lod/.polar files for the
-3-D work.
-"""
+"""Figures for Chapters 5-6: airfoils, drag divergence, wing and tail; every curve is read from a solver output file (SU2 CSVs/results_v3.json for 2-D, VSPAERO .lod/.polar for 3-D)."""
 import csv
 import json
 import os
@@ -27,12 +22,7 @@ def cp_critical(m):
 
 
 def _camber_line():
-    """Mean line of SC(2)-0412 from its coordinate file, as a function of x/c.
-
-    Used to split the SU2 surface nodes into upper and lower. Splitting on the
-    sign of y fails on this section: its aft camber carries the lower surface
-    above y = 0 near the cusped trailing edge.
-    """
+    """Mean line of SC(2)-0412 vs x/c, used to split SU2 nodes into upper/lower since a sign(y) split fails near the cusped trailing edge."""
     x, y = load_airfoil("sc20412_selig.dat")
     i = int(np.argmin(x))                      # Selig order: TE -> LE -> TE
     xu, yu = x[:i + 1][::-1], y[:i + 1][::-1]
@@ -74,8 +64,7 @@ SCREEN = [
 
 
 def fig_5_0():
-    """The real sections behind the Chapter 5 screen, drawn from the UIUC
-    coordinate files actually fed to NeuralFoil, SU2 and OpenVSP."""
+    """The real sections behind the Chapter 5 screen, drawn from the UIUC coordinate files actually fed to NeuralFoil, SU2 and OpenVSP."""
     use_style()
     fig, axes = plt.subplots(len(SCREEN), 1, figsize=(7.0, 6.4), sharex=True)
     for ax, (fn, lab, tc, clmax, sweep), col in zip(
@@ -222,8 +211,7 @@ def fig_5_2():
 def fig_5_3():
     use_style()
     blocks, ref = read_lod(os.path.join(VSP, "01_wing_baseline", "wing_v6_baseline.lod"))
-    # Cases run alpha = -2, 0, 2, 4, 6, 8, 10 deg; cruise C_L = 0.34 sits at
-    # alpha ~ 2.4 deg, so take the alpha = 2 deg case (C_L = 0.309).
+    # Cases run alpha -2..10 deg; cruise C_L = 0.34 sits near alpha 2.4 deg, so take the alpha = 2 deg case (C_L = 0.309).
     d = blocks[2]
     y = d["Yavg"]
     m = y > 0
@@ -259,9 +247,7 @@ def fig_5_3():
           "Loaded inboard, unloaded at the tip — what taper\n0.35 plus washout "
           "should give.")
 
-    # Stall location must be read near maximum lift, not at cruise: the peak
-    # section c_l migrates outboard as angle of attack rises (eta 0.36 at
-    # alpha = 2 deg, 0.60 at alpha = 10 deg), so the highest-alpha case governs.
+    # Stall location must be read near max lift, not cruise: peak section c_l migrates outboard as alpha rises (eta 0.36 at 2 deg, 0.60 at 10 deg).
     for tag, blk, col, ls in (("α = 10°, near stall", blocks[6], C1, "-"),
                               ("α = 4°, en-route climb", blocks[3], MUTED, "--")):
         y2 = blk["Yavg"]
@@ -423,8 +409,7 @@ def fig_6_2():
     ax.plot(cl, cm, "o-", color=C1, lw=2.2, ms=8, mfc="white", mew=2.2,
             label=f"full_v7, closed body:  $dC_m/dC_L$ = {k:.4f},  R² = {r2:.3f}")
 
-    # The retracted model: the same sweep on the v5 body as-scripted, whose tail
-    # cone terminated on an open 2.18 ft^2 aperture -- ill-posed in a panel method.
+    # The retracted model: same sweep on the v5 body as-scripted, whose tail cone terminated on an open 2.18 ft^2 aperture -- ill-posed in a panel method.
     ret = os.path.join(VSP, "10_full_v6", "ref_v5_asis", "full_v5.polar")
     c2_, d2 = read_polar(ret)
     cl2, cm2 = d2[:, c2_["CLtot"]], d2[:, c2_["CMytot"]]

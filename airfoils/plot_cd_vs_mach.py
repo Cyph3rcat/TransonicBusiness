@@ -1,13 +1,4 @@
-"""
-Simple single-panel view: how CD changes with freestream Mach for SC(2)-0412,
-straight from the SU2 adaptive Mach sweep (7 points, M=0.5922-0.7722).
-
-Reads airfoils/su2_screen/mach_sweep_sc20412/results_su2_sweep_sc20412.json --
-no new analysis, just a plainer version of the drag-rise panel from
-plot_sc20412_results.py.
-
-Run: python plot_cd_vs_mach.py
-"""
+"""CD vs freestream Mach for SC(2)-0412, from the SU2 adaptive Mach sweep -- a plainer version of the drag-rise panel in plot_sc20412_results.py."""
 import json
 from pathlib import Path
 

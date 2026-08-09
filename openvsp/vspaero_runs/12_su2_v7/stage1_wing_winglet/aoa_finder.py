@@ -1,31 +1,4 @@
-"""Find the AoA at M0.80 that puts this wing at the real cruise CL.
-
-Why: the Mach sweep ran at a fixed AoA=3.7 deg, a value inherited from
-VSPAERO. VSPAERO is a vortex-lattice code and does not model M0.80
-compressibility properly -- it reported CL=0.34 at that angle, but the
-refined Euler solve gives CL=0.608. That is 69% more lift than the aircraft
-ever flies at, and wave drag is strongly CL-dependent, so the whole
-drag-divergence result is pessimistic at an operating point that does not
-exist.
-
-Target CL, derived from this project's own numbers rather than assumed:
-    W_TO   = 11,660 lb                 (config.md A.3, canonical)
-    Sref   = 193.678 ft^2              (config.md B, canonical)
-    FL410, M0.80  -> p = 17,872 Pa     (gen_configs.py, ISA isothermal layer)
-    q      = 0.7 * p * M^2 = 8,006.6 Pa
-    CL     = (11,660 * 4.448222) / (8,006.6 * 17.9928) = 0.360
-Cross-checks against config.md's own "cruise CL~0.34" (line 228/291/320) and
-"at FL450 cruise CL only reaches 0.375" (line 469), so 0.34-0.375 is the
-real band and 0.360 is the MTOW/FL410 point in it.
-
-Runs three angles, restart-chained (each starts from the previous converged
-flow, which is much faster than three cold starts), then linearly fits
-CL(alpha) to solve for the target. Three points rather than two so the fit
-has a residual worth looking at -- if CL(alpha) is not linear here, that
-itself is worth knowing before trusting an interpolated cruise angle.
-
-Usage:  python3 aoa_finder.py
-"""
+"""Finds the AoA at M0.80 for the real cruise CL: VSPAERO's fixed AoA=3.7 deg reported CL=0.34, but the Euler solve gives CL=0.608 (69% more lift than the aircraft flies at), so the drag-divergence result was pessimistic at a non-existent operating point; target CL=0.360 from W_TO=11660 lb, Sref=193.678 ft^2, FL410/M0.80 q=8006.6 Pa (config.md A.3/B), cross-checked against config.md's own 0.34-0.375 cruise-CL band. Runs 3 restart-chained angles and linearly fits CL(alpha) -- 3 points, not 2, so the residual flags nonlinearity before trusting the interpolated angle. Usage: python3 aoa_finder.py"""
 import csv
 import os
 import subprocess

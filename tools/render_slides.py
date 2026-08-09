@@ -1,10 +1,4 @@
-"""Render lecture-slide PDF pages to PNG so image-only decks can be transcribed.
-
-The course decks are exported from PowerPoint with their content as bitmaps, so
-neither pypdf nor markitdown recovers more than the slide titles and footers.
-Rendering whole pages (rather than pulling embedded images out, which fragments a
-slide into template art plus several disconnected figures) keeps each slide
-readable as one picture.
+"""Renders lecture-slide PDF pages to PNG so image-only decks can be transcribed; whole pages are rendered rather than extracting embedded images, which would fragment a slide into template art plus disconnected figures.
 
 Usage:
     python tools/render_slides.py "Week 7 (3)"      # one deck

@@ -1,12 +1,4 @@
-"""Shared isentropic critical-pressure-coefficient formula.
-
-Cp_cr(M) is the pressure coefficient at which local flow first reaches
-Mach 1 (sonic), given freestream Mach M. Used by both critical_mach_pg.py
-(Prandtl-Glauert extrapolation of a low-speed Cp_min) and
-su2_screen/extract_cpmin_crossing.py (real compressible CFD Cp_min) so the
-two independent M_crit methods share exactly one copy of this formula --
-a typo here would silently corrupt the comparison between them.
-"""
+"""Cp_cr(M): isentropic critical pressure coefficient (local sonic point) -- shared by critical_mach_pg.py and su2_screen/extract_cpmin_crossing.py so the two independent M_crit methods can't silently diverge."""
 
 GAMMA = 1.4
 

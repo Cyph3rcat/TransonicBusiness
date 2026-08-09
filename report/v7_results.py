@@ -1,21 +1,4 @@
-"""Consolidate the full_v7 VSPAERO results into the numbers the report quotes.
-
-Everything here is read out of the run directories in
-`openvsp/vspaero_runs/11_full_v7/`; nothing is retyped by hand. Run from
-anywhere:
-
-    python report/v7_results.py
-
-Outputs, in order:
-  1. the neutral-point-vs-S_HT parametric fit (four alpha sweeps at fixed wing
-     position), which is what sizes the horizontal tail,
-  2. longitudinal slopes for the final configuration,
-  3. lateral/directional slopes for the final configuration, with the symmetry
-     noise floor reported so the reader can see Cn_beta is actually resolved,
-  4. the Class-I CG envelope at the final geometry.
-
-Sign conventions follow VSPAERO's .stab files: CMl = -CMx, CMn = -CMz.
-"""
+"""Consolidates full_v7 VSPAERO results (openvsp/vspaero_runs/11_full_v7/) into the numbers the report quotes; sign convention follows VSPAERO's .stab files: CMl = -CMx, CMn = -CMz."""
 import json
 import math
 import os
@@ -47,12 +30,7 @@ def read_polar(path):
 
 
 def longitudinal(path, xcg):
-    """CL_alpha, dCm/dCL, neutral point from a real alpha sweep.
-
-    Preferred over VSPAERO's `-stab` finite difference, which perturbs by
-    0.01 deg and so differences the moment coefficients at the same order as
-    the solve's own residual noise (config.md D.5b).
-    """
+    """CL_alpha, dCm/dCL, neutral point from a real alpha sweep -- preferred over VSPAERO's -stab finite difference, whose 0.01 deg perturbation is at the same order as the solve's residual noise (config.md D.5b)."""
     c, d = read_polar(path)
     a = np.deg2rad(d[:, c["AoA"]])
     cl, cm, cd = d[:, c["CLtot"]], d[:, c["CMytot"]], d[:, c["CDtot"]]

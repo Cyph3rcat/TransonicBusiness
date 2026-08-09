@@ -1,9 +1,4 @@
-"""Figures for Chapters 7-10: landing gear, weights and CG, drag, performance.
-
-Numeric inputs come from the JSON written by the report scripts
-(landing_gear.py, class2_weights.py, performance.py, v7_results.py), so these
-figures cannot drift from the tables in the text.
-"""
+"""Figures for Chapters 7-10: landing gear, weights and CG, drag, performance; inputs come from the JSON written by the report scripts so figures cannot drift from the text."""
 import json
 import os
 
@@ -213,8 +208,7 @@ def fig_8_2():
     vals = [g["W"] for g in groups]
     mtow = 11660.0
 
-    # Colour encodes the group family, which is the only categorical structure
-    # in this table -- not the bar's own magnitude, which the length already says.
+    # Colour encodes group family (the only categorical structure here), not magnitude -- the bar length already says that.
     FAMILY = {
         "Wing": "Structure", "Horizontal tail": "Structure",
         "Vertical tail": "Structure", "Fuselage": "Structure",

@@ -1,20 +1,4 @@
-"""Drop the degenerate far-field-box-corner triangle fan from the Stage 2 STL.
-
-Found 2026-08-09: classifySurfaces() failed with "one edge is incident to 3
-triangles" -- a genuine non-manifold defect, different in kind from stage1's
-near-duplicate-overlap pattern. All 4 offending edges cluster in one tiny
-spot: x in [76,80], y=0 exactly, z=152.667 -- a rounded corner of the 300 ft
-far-field box, roughly 300 ft from the aircraft (which spans x:0-45,
-z:-6..+12). This is a localized far-field tessellation glitch, unrelated to
-the wing-root/y=0-cap lesson from stage1 -- confirmed by the fact that this
-cluster sits at the OUTER box boundary, not on any aircraft body.
-
-Deliberately scoped tight (y=0 AND far outside the aircraft's own extent) so
-this cannot touch the wing root, vertical tail root, or fuselage centerline
--- all of which legitimately have y=0 vertices that must NOT be stripped.
-
-Usage: python3 strip_farfield_glitch.py <in.stl> <out.stl>
-"""
+"""Drops the degenerate far-field-box-corner triangle fan from the Stage 2 STL: classifySurfaces() failed with "one edge is incident to 3 triangles", a genuine non-manifold defect (unlike stage1's near-duplicate-overlap pattern) localized to 4 edges at x in [76,80], y=0, z=152.667 -- a rounded corner of the 300 ft far-field box, ~300 ft from the aircraft (x:0-45, z:-6..+12), so unrelated to stage1's wing-root/y=0-cap lesson. Scoped tight (y=0 AND far outside the aircraft's extent) so it can't touch the wing root, VT root, or fuselage centerline, which legitimately have y=0 vertices. Usage: python3 strip_farfield_glitch.py <in.stl> <out.stl>"""
 import sys
 
 YTOL = 1e-6

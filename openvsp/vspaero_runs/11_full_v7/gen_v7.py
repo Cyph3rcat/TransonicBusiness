@@ -1,30 +1,4 @@
-"""Build full_v6 and its empennage parametric variants, and run VSPAERO on them.
-
-full_v6 vs full_v5
-------------------
-1. FUSELAGE: adopts the user's 2026-08-06 GUI reloft verbatim (7 stations, nose
-   tip z=-1.93, nose blend to x=10.85, blunt capped radome) with ONE fix -- the
-   tail terminated on a 1.667 ft circle with `CapUMaxOption = 0`, i.e. the body
-   was left open: a 2.18 ft^2 hole at x=42.2. Here the tip is drawn down to
-   0.60 ft and given a round end cap, recovering ~1.9 ft^2 of base area.
-   The dead `Fuselage old` geom carried in the v5 file is dropped.
-2. EMPENNAGE: areas are now parameters. v5's tails were sized against the
-   pre-CG-fix wing position and never re-sized after the wing moved 3.1 ft
-   forward, leaving c_HT = 1.34 / c_VT = 0.1225 at the true arms (size_tails.py).
-3. Everything else -- wing, winglet, nacelle, pylon, belly fairing, dorsal fin --
-   is carried over unchanged so the comparison isolates the empennage.
-
-Experimental design: for the NP parametric ONLY S_HT moves (S_VT, wing position
-and Xcg held), so dNP/dS_HT is clean. For the Cn_beta parametric only S_VT
-moves. The coupled wing/CG solve then happens in size_tails.py, and the final
-configuration is rebuilt and re-verified.
-
-Usage (from this directory):
-    python gen_v6.py --baseline            # build+run the v5-area reference
-    python gen_v6.py --ht-sweep            # S_HT parametric, alpha sweeps
-    python gen_v6.py --vt-sweep            # S_VT parametric, beta sweeps
-    python gen_v6.py --final S_HT S_VT XW  # final config, alpha + beta
-"""
+"""Builds full_v6 + empennage variants and runs VSPAERO. vs v5: fuselage adopts the user's 2026-08-06 GUI reloft with the tail cap fixed (v5 left CapUMaxOption=0, an open body with a 2.18 ft^2 hole at x=42.2, corrupting Cmy); empennage areas (S_HT, S_VT) are now sizing parameters since v5's tails were never re-sized after the wing moved 3.1 ft forward; everything else is carried over unchanged to isolate the empennage. NP parametric moves only S_HT, Cn_beta parametric only S_VT (wing/Xcg held), so each derivative is clean. Usage: python gen_v6.py --baseline|--ht-sweep|--vt-sweep|--final S_HT S_VT XW"""
 import argparse
 import math
 import os
@@ -40,9 +14,7 @@ AIRFOIL = "../../../../airfoils/dat_clean/sc20412_selig.dat"
 
 SREF, BREF, CREF = 193.678, 41.5324, 5.0236
 
-# The user's fuselage, read straight out of full_v5.vsp3 (2026-08-06 GUI edit).
-# x, z (ft), section type, height, width, top/bottom/side tangent angles (deg),
-# tangent strength. Station 6's diameter is overridden below.
+# fuselage from full_v5.vsp3's 2026-08-06 GUI edit: x,z(ft), H,W, top/bot/side tangent angles(deg), strength; station 6's diameter is overridden below
 FUSE_L = 42.2
 FUSE = [
     # x       z        H        W        top      bot       side     str  tbsym
@@ -410,20 +382,9 @@ COMPONENTS = ["Fuselage", "BellyFairing", "MainWing", "Nacelle", "Pylon",
 
 
 def make(name, s_ht, s_vt, x_wing, xcg, mode, dorsal=True, exclude=None):
-    """Write a variant's build+run script into its own directory.
-
-    exclude: component name (from COMPONENTS) to leave OUT of the analysis
-    GeomSet/ThinGeomSet -- built but contributing zero force. Used for the
-    leave-one-out pitching-moment buildup: baseline minus (baseline w/o
-    component X) isolates X's net moment contribution, interference included.
-    """
+    """Write a variant's build+run script into its own directory; exclude leaves a component OUT of the analysis GeomSet/ThinGeomSet (still built, zero force) for the leave-one-out pitching-moment buildup."""
     ht, vt = st.tail_geometry(s_ht, s_vt)
-    # The dorsal fin's root chord must still reach the (possibly moved) fin LE.
-    # v5 ran apex x=26.5 to the fin root at 31.6 with cr=6.2; hold that overlap.
-    # Diagnostic: the dorsal is a thin VLM surface whose fixed 6.2 ft root
-    # overlaps the (resizable) fin root. Overlapping thin surfaces
-    # interpenetrate in a VLM, so it can be switched off to test whether it
-    # is corrupting Cn_beta.
+    # dorsal root chord (6.2, fixed) must still reach the movable fin LE; overlapping thin VLM surfaces interpenetrate, so dorsal can be toggled off to test if it's corrupting Cn_beta
     dorsal_cr = 6.2
 
     if mode == "alpha":

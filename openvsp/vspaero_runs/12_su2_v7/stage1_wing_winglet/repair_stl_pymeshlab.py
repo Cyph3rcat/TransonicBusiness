@@ -1,18 +1,4 @@
-"""Repair OpenVSP's raw CFDMesh STL with pymeshlab before handing it to gmsh.
-
-Why this exists: the gmsh classify()+fill pipeline (make_mesh_euler2.py) hits
-a facet-overlap at the wing root leading edge on the tightened (fine) mesh
-settings, at the exact same node IDs regardless of gmsh-side tolerance,
-density, or local-refinement changes. That pattern says the defect is a tiny
-near-duplicate triangle pair baked into OpenVSP's own triangulation, not
-something gmsh's generic removeDuplicateNodes() (which found ZERO duplicates
-here even at Geometry.Tolerance=1e-7) is built to catch. pymeshlab has repair
-filters purpose-built for exactly this class of defect (stitching, collapsing
-near-coincident vertices, dropping degenerate/duplicate faces) -- this script
-runs those on the STL as a standalone cleanup pass, before gmsh ever sees it.
-
-Usage: python3 repair_stl_pymeshlab.py <in.stl> <out.stl> [merge_threshold_ft]
-"""
+"""Repairs OpenVSP's raw CFDMesh STL with pymeshlab before gmsh sees it: the gmsh classify()+fill pipeline (make_mesh_euler2.py) hits a facet-overlap at the wing root LE at the same node IDs regardless of gmsh-side tolerance/density/refinement, meaning the defect is a tiny near-duplicate triangle baked into OpenVSP's own triangulation (gmsh's removeDuplicateNodes found ZERO duplicates even at Geometry.Tolerance=1e-7); pymeshlab's repair filters (stitching, near-coincident vertex collapse, degenerate/duplicate face removal) are purpose-built for exactly this. Usage: python3 repair_stl_pymeshlab.py <in.stl> <out.stl> [merge_threshold_ft]"""
 import sys
 
 import pymeshlab
@@ -20,12 +6,7 @@ import pymeshlab
 def main():
     in_stl = sys.argv[1]
     out_stl = sys.argv[2]
-    # Root LE feature scale here is ~0.025-0.08 ft (MinLen/BaseLen). The
-    # crack itself is sub-micron in dihedral terms but the actual vertex gap
-    # is apparently larger than 1e-7 ft (gmsh's Geometry.Tolerance=1e-7 did
-    # nothing) and smaller than 1e-4 ft (that value catastrophically merged
-    # 42,745 unrelated nodes across the whole model). Start at 5e-5 ft --
-    # inside that bracket, well below the smallest real feature size.
+    # root LE feature scale is ~0.025-0.08 ft; the vertex gap is bracketed larger than 1e-7 ft (gmsh's Geometry.Tolerance=1e-7 did nothing) and smaller than 1e-4 ft (that catastrophically merged 42,745 unrelated nodes) -- 5e-5 ft sits inside that bracket, well below the smallest real feature
     merge_thresh = float(sys.argv[3]) if len(sys.argv) > 3 else 5e-5
 
     ms = pymeshlab.MeshSet()

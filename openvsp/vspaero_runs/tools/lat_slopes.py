@@ -1,12 +1,4 @@
-"""Cn_beta / Cl_beta / CY_beta by least-squares slope over a real sideslip sweep.
-
-Usage: python lat_slopes.py label1=path1.polar [label2=path2.polar ...]
-
-VSPAERO sign convention (see any .stab file): CMl = -CMx, CMn = -CMz. The
-noise floor is reported explicitly as |CMz| at beta=0, which must be zero by
-symmetry - if the slope*beta_max is not comfortably above it, the derivative
-is not resolved.
-"""
+"""Cn_beta/Cl_beta/CY_beta by least-squares slope over a real sideslip sweep. Usage: python lat_slopes.py label1=path1.polar [label2=path2.polar ...]. VSPAERO sign convention: CMl=-CMx, CMn=-CMz; noise floor is reported as |CMz| at beta=0 (zero by symmetry) -- if slope*beta_max isn't comfortably above it, the derivative isn't resolved."""
 import sys
 import numpy as np
 

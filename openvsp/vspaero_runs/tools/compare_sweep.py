@@ -1,7 +1,4 @@
-"""Summarize taper/twist variants: span efficiency + stall-onset character.
-
-Run from openvsp/vspaero_runs/:  python tools/compare_sweep.py
-"""
+"""Summarizes taper/twist variants: span efficiency + stall-onset character. Run from openvsp/vspaero_runs/: python tools/compare_sweep.py"""
 import glob
 import os
 import sys

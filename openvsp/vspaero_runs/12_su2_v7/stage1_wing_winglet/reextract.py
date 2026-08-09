@@ -1,13 +1,4 @@
-"""Re-extract converged CL/CD/CMz for each Mach sweep point.
-
-The sweep converged all 8 points correctly, but the history CSV only
-included residuals (HISTORY_OUTPUT wasn't set, so it defaulted to
-RMS_RES only) -- SCREEN_OUTPUT showed CL/CD/CMz in the terminal table but
-that wasn't captured to a file. Fix is in gen_configs.py now
-(HISTORY_OUTPUT= (ITER, RMS_RES, AERO_COEFF)); this script re-runs each
-already-converged point for 2 iterations from its own restart file (cheap
--- not a re-solve) purely to get a CSV with the coefficients in it.
-"""
+"""Re-extracts converged CL/CD/CMz per Mach point: the sweep converged all 8 points but the history CSV only had RMS_RES (HISTORY_OUTPUT wasn't set, so SCREEN_OUTPUT showed CL/CD/CMz but it was never captured to file); fixed in gen_configs.py (HISTORY_OUTPUT=(ITER,RMS_RES,AERO_COEFF)), so this cheaply re-runs each already-converged point for 2 iterations from its restart file just to get a CSV with the coefficients."""
 import csv
 import glob
 import os

@@ -1,15 +1,4 @@
-"""Post-processing for VSPAERO 7.x runs (.polar + .lod).
-
-Usage:
-    python vspaero_post.py <basename> [--clmax2d 2.11] [--cltarget 0.34 0.60 1.27]
-      <basename> = path prefix, e.g. ..\01_wing_baseline\wing_v6_baseline
-
-Outputs (per run):
-  - table of CL, CDi, CDtot, L/D, e (surface) and ew (Trefftz/wake) vs alpha
-  - lift-curve fit (CLalpha, alpha0)
-  - span-load plot: cl*c/cref vs eta, normalized vs elliptical, + local cl
-  - stall-onset estimate: alpha/CL where max local cl hits clmax_2d
-"""
+"""Post-processing for VSPAERO 7.x runs (.polar + .lod). Usage: python vspaero_post.py <basename> [--clmax2d 2.11] [--cltarget 0.34 0.60 1.27] (basename = path prefix, e.g. ..\01_wing_baseline\wing_v6_baseline). Outputs per run: CL/CDi/CDtot/L/D/e table vs alpha, lift-curve fit (CLalpha, alpha0), span-load plot vs elliptical, and a stall-onset estimate where max local cl hits clmax_2d."""
 import argparse
 import re
 import sys
@@ -78,7 +67,7 @@ def strip_data(arr, cols, bref, cref):
     order = np.argsort(y)
     y, chord, cl = y[order], chord[order], cl[order]
     eta = y / (bref / 2.0)
-    load = cl * chord / cref  # cl*c/cref
+    load = cl * chord / cref
     return eta, chord, cl, load
 
 

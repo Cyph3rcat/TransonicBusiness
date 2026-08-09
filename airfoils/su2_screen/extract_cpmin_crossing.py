@@ -1,19 +1,4 @@
-"""Extract M_crit (Cp-crossing) and M_dd (Cd hockey-stick) from the SC(2)-0412
-adaptive Mach sweep (adaptive_sweep.py / adaptive_sweep_results.json).
-
-Cp derivation note (2026-08-04 revision): OUTPUT_FILES=(RESTART, SURFACE_CSV)
-does NOT emit a ready-made Pressure_Coefficient column for a MARKER_HEATFLUX
-wall in this SU2 build -- the actual surface_<tag>.csv columns are the raw
-conservative flow variables: PointID, x, y, Density, Momentum_x, Momentum_y,
-Energy, Turb_Kin_Energy, Omega. Static pressure is recovered from these via
-the ideal-gas relation:
-    p = (gamma-1) * (Energy - 0.5*(Momentum_x^2 + Momentum_y^2)/Density)
-then Cp = (p - p_inf) / (0.5 * rho_inf * V_inf^2), using the freestream
-p_inf/rho_inf/V_inf each run's own log already reports (adaptive_sweep.py's
-result dict carries these per point -- Ref. value = 1 throughout in this
-solver's setup, i.e. these are plain SI values, not internally
-non-dimensionalized).
-"""
+"""Extract M_crit (Cp-crossing) and M_dd (Cd hockey-stick) from the SC(2)-0412 adaptive sweep -- SU2's SURFACE_CSV has no Cp column for a MARKER_HEATFLUX wall, so Cp is recovered from the raw conservative variables via the ideal-gas relation."""
 import csv
 import json
 import sys
@@ -56,13 +41,7 @@ CONSECUTIVE_NEEDED = 2  # must match adaptive_sweep.py's live stopping criterion
 
 
 def find_hockey_stick(machs, cds):
-    """Mach at the start of the first SUSTAINED rise -- i.e. the first interval
-    of a run of CONSECUTIVE_NEEDED consecutive intervals all >= the Boeing
-    criterion. Must match adaptive_sweep.py's live stop logic exactly, or this
-    can report a noisy single-interval blip that later reversed (which is
-    exactly what happened here: the 0.6222->0.6522 jump was a false start,
-    not the real divergence -- the real, sustained rise only shows up in the
-    last two intervals, which is what actually triggered the live stop)."""
+    """Mach at the start of the first run of CONSECUTIVE_NEEDED consecutive dCd/dM>=threshold intervals -- must match adaptive_sweep.py's live stop logic exactly, since single-interval blips (like the 0.6222->0.6522 jump here) can be false starts."""
     slopes = [(cds[i + 1] - cds[i]) / (machs[i + 1] - machs[i]) for i in range(len(machs) - 1)]
     run = 0
     for i, slope in enumerate(slopes):

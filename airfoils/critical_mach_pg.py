@@ -1,25 +1,4 @@
-"""Classical Prandtl-Glauert + critical-Cp method for M_crit.
-
-Candidates: NASA SC(2)-0412 (12% t/c), NASA SC(2)-0414 (14% t/c) -- the two
-thicker supercritical sections adopted 2026-08-04 after SC(2)-0410 (9.97%)
-was retired for insufficient wing fuel volume (doubts.md #15).
-
-Method (replaces Korn's equation per 2026-08-04 request -- Korn's own
-regression already contradicted itself across methods for the SC(2)-0410
-screen, see config.md B.5.1):
-  1. Get the low-speed (incompressible) Cp_min at the design C_li=0.248
-     from NeuralFoil (aerosandbox's `Cpmin_0` field -- valid regime, no
-     compressibility extrapolation baked in yet).
-  2. Apply the Prandtl-Glauert rule: Cp(M) = Cpmin_0 / sqrt(1 - M^2).
-  3. Find M where Cp(M) equals the isentropic critical-Cp curve Cp_cr(M)
-     (critical_cp.py) -- that crossing is M_crit.
-
-This is a linearized/low-speed-extrapolated estimate. It is expected to be
-LESS accurate than the real SU2 Mach-sweep result (su2_screen/) in exactly
-the M~0.7-0.8 regime being probed, since Prandtl-Glauert's 1/sqrt(1-M^2)
-term is known to degrade near there -- kept as the SU2 sweep's Mach-bracket
-prior and as an ASSUMPTION-tier comparison point, not the canonical number.
-"""
+"""Prandtl-Glauert + critical-Cp M_crit estimate for SC(2)-0412/0414 -- linearized and expected to be LESS accurate than the SU2 sweep in the M~0.7-0.8 regime being probed, so it's kept as the sweep's Mach-bracket prior, not the canonical number."""
 
 import json
 from pathlib import Path

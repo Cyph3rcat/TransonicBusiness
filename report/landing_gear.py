@@ -1,25 +1,4 @@
-"""Chapter 7 -- landing gear design.
-
-Method is the one taught in AAE5203 Week 11, which is Raymer Ch.11 for the
-loads/tyres/shock absorber and Sadraey Ch.9 for the clearance and overturn
-geometry:
-
-  Sadraey Eq. (9.18)   overturn angle  Phi_ot >= 25 deg
-  Sadraey Table 9.4    recommended component ground clearances
-  Raymer Fig. 11.5     M_a/B > 0.05 and M_f/B < 0.20 (0.08/0.15 preferred)
-  Raymer Eq. (11.1-4)  max/min static loads and the dynamic braking load
-  Raymer Eq. (11.5-7)  tyre contact area, braking kinetic energy
-  Raymer Table 11.2    tyre data (the table reproduced on the Week 11 slide)
-  Raymer Eq. (11.12)   shock-absorber stroke
-  Raymer Eq. (11.13)   oleo external diameter
-  Raymer Table 11.4/5  shock-absorber efficiency, gear load factor
-
-Geometry inputs are read from the full_v7 build script conventions; the CG
-envelope comes from report/class2_weights.py if it has been run, else from the
-Class-I envelope in report/v7_results.json.
-
-Everything printed here is reproduced in the report; nothing is retyped.
-"""
+"""Chapter 7 -- landing gear design (Raymer Ch.11 loads/tyres/shock absorber + Sadraey Ch.9 clearance/overturn geometry); CG envelope prefers report/class2_weights.py, falling back to the Class-I envelope in v7_results.json if it hasn't been run."""
 import json
 import math
 import os
@@ -65,8 +44,7 @@ print(f"  forward CG  x = {X_CG_FWD:.3f} ft  ({(X_CG_FWD - X_LEMAC) / MAC * 100:
 print(f"  aft CG      x = {X_CG_AFT:.3f} ft  ({(X_CG_AFT - X_LEMAC) / MAC * 100:.1f}% MAC)")
 
 # ------------------------------------------------- 7.1 vertical position
-# The gear length is set by ground clearance under the lowest airframe point,
-# which on this configuration is the belly fairing, not the fuselage barrel.
+# Gear length is set by ground clearance under the lowest airframe point, which here is the belly fairing, not the fuselage barrel.
 CLEARANCE_FAIRING = 1.00        # ft, ASSUMPTION inside Sadraey Table 9.4 item 1
 Z_GROUND = Z_FAIRING_BOTTOM - CLEARANCE_FAIRING
 H_AXIS = -Z_GROUND              # fuselage axis height above ground
@@ -159,8 +137,7 @@ print(f"  NOSE DESIGN LOAD = static+dynamic = {nose_design:.0f} lb "
       f"-> {nose_design / N_NOSE_WHEELS:.0f} lb/wheel ({N_NOSE_WHEELS} nose wheels)")
 
 # ---------------------------------------------------------- 7.6 tyre selection
-# Raymer Table 11.2 (the Week 11 slide), Type VII and three-part-name entries
-# that bracket this aircraft's per-wheel loads.
+# Raymer Table 11.2 entries (Type VII and three-part-name) that bracket this aircraft's per-wheel loads.
 TIRES = [
     # name,          speed,  max load lb, psi, width, diam, roll radius, rim
     ("18 x 4.4",      "174 kt", 2100,  100, 4.45, 17.90, 7.9, 10.0, 6),
@@ -180,11 +157,7 @@ def contact_area(w, d, rr):
 
 
 def pick(load, label):
-    """Two criteria, not one. A tyre must carry the load (Raymer Table 11.2
-    rated load) AND keep its inflation pressure below the Table 11.3 flotation
-    limit for the intended surface -- pressure follows from Eq. (11.5),
-    W_w = P A_p, so the smallest tyre that carries the load is often not
-    acceptable on pavement."""
+    """A tyre must carry the load (Table 11.2) AND keep P = W_w/A_p (Eq. 11.5) below the Table 11.3 flotation limit -- the smallest tyre that carries the load is often not acceptable on pavement."""
     print(f"\n  {label}: required {load:.0f} lb/wheel")
     print(f"  {'size':<15}{'max load':>9}{'w in':>7}{'d in':>7}{'Rr in':>7}{'rim':>6}"
           f"{'A_p in2':>9}{'P req':>8}{'load':>7}{'float':>7}")

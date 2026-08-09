@@ -1,33 +1,4 @@
-"""Stage 2 SU2 volume mesh: wing+winglet+fuselage+belly fairing+tail, EULER.
-
-Why this differs from stage1's make_mesh_euler3.py: that script's shortcut
-(skip classifySurfaces/createGeometry, keep OpenVSP's triangles verbatim,
-sort exactly 2 raw connected components into wing/farfield) relied on the
-GUI export happening to produce 2 cleanly disconnected pieces. Checked here
-first (diag_stage2_topology, 2026-08-09) and it does NOT hold: CFDMesh fused
-the ENTIRE aircraft (fuselage+fairing+wing+tail) and the farfield box into
-ONE connected component (40,772 of 40,778 triangles), plus 3 tiny 2-triangle
-degenerate slivers at the box's top face. There is no clean raw split to
-exploit here.
-
-So this goes back to the classifySurfaces()+createGeometry() approach
-(dihedral-angle patch decomposition, same as the ORIGINAL make_mesh_euler2.py
-before the stage1 shortcut was found) -- it doesn't need a clean raw
-connectivity split because it re-derives real parametrized surface patches
-from the triangle soup directly, then sorts THOSE by bounding box into
-wing_wall / symmetry / farfield.
-
-y=0 cap handling: stage1's root cause (OpenVSP mis-triangulating a flat
-symmetry-plane cap, confirmed 2026-08-08/09 by finding real overlapping
-facets there and by the crash disappearing once tighter export settings
-happened to clean that face up on their own) generalizes here as a
-first-class step: any leftover naked-edge boundary after classification gets
-patched with ONE flat plane surface, exactly like stage1's proven fix,
-regardless of which body (wing, vertical tail, dorsal fin) the gap belongs
-to -- same technique, general to any symmetric part clipped at y=0.
-
-Usage:  python3 make_mesh_stage2.py [--coarse]
-"""
+"""Stage 2 SU2 volume mesh: wing+winglet+fuselage+belly fairing+tail, EULER. Differs from stage1's make_mesh_euler3.py because CFDMesh fused the ENTIRE aircraft + farfield box into ONE connected component (confirmed 2026-08-09), so there's no clean raw wing/farfield split to exploit; falls back to classifySurfaces()+createGeometry() dihedral-angle patch decomposition (like the original make_mesh_euler2.py) and bbox-sorts the resulting patches into wing_wall/symmetry/farfield. Any leftover naked-edge boundary after classification gets patched with a flat plane surface, generalizing stage1's y=0-cap fix to any symmetric body clipped at y=0. Usage: python3 make_mesh_stage2.py [--coarse]"""
 import argparse
 import math
 import os
@@ -44,17 +15,7 @@ def classify():
     gmsh.merge(SRC_STL)
     gmsh.model.mesh.removeDuplicateNodes()
     gmsh.model.mesh.removeDuplicateElements()
-    # 45, not stage1's 35: at 35 deg, one patch at the T-tail junction (where
-    # the horizontal tail root meets the vertical tail tip, both swept,
-    # meeting at a compound angle) classified as a single connected region
-    # with an 80-segment boundary that createGeometry() could not
-    # parametrize. Confirmed to be REAL 3D wetted surface, not a flat y=0 cap
-    # (0 of 898 triangles fully at y=0) -- so this could not be discarded and
-    # rebuilt flat like every previous fix this session. Bumping to 45 deg
-    # regroups that same triangle soup into patches with cleaner boundaries;
-    # tested 45/60/90, all pass, 45 chosen as the smallest change that fixes
-    # it (81 surfaces vs 89 at 35 deg -- not the near-total collapse seen at
-    # 90 deg's 26 surfaces).
+    # 45, not stage1's 35: at 35 deg the T-tail junction (HT root meets VT tip, compound sweep) classified as one connected region with an unparametrizable 80-segment boundary -- a real 3D wetted surface, not a flat cap, so it couldn't be discarded and rebuilt flat; 45 deg regroups it cleanly (81 surfaces vs 89 at 35, not the near-collapse seen at 90's 26)
     angle = 45
     gmsh.model.mesh.classifySurfaces(angle * math.pi / 180.0, True, True, 0.01)
     gmsh.model.mesh.createGeometry()
@@ -97,20 +58,7 @@ def build(coarse=False):
     print(f"leftover naked edges (should be small/empty): {len(gaps)}")
 
     if gaps:
-        # Stage1 (make_mesh_euler3.py) treated all leftover naked edges as
-        # ONE closed loop -- valid there because there was only ever one
-        # gap. Stage2 has many more bodies clipped at y=0 (fuselage, belly
-        # fairing, wing, vertical tail, horizontal tail), so a single
-        # combined boundary can legitimately be SEVERAL separate holes, not
-        # one. Confirmed by inspection (2026-08-09): 110 gap curves here
-        # form 4 disjoint closed loops (85/16/6/3 curves), not one -- feeding
-        # all 110 into a single addCurveLoop built an invalid, effectively
-        # self-intersecting "patch" that the 3D fill then choked on
-        # (repeating "Impossible to recover edge" warnings, timed out at 30
-        # min with no progress -- same stuck-loop signature as stage1's
-        # aborted CFD-source attempt). Fix: group by curve connectivity
-        # (union-find on shared endpoint vertices) and patch each loop with
-        # its own plane surface.
+        # stage1 treated all leftover naked edges as one closed loop (valid there, only one gap existed); stage2 has several bodies clipped at y=0, so the 110 gap curves here form 4 disjoint closed loops (85/16/6/3), not one -- feeding them all into one addCurveLoop built a self-intersecting patch that choked the 3D fill ("Impossible to recover edge", timed out); fix: group by curve connectivity (union-find on shared endpoints) and patch each loop separately
         by_curve_pts = {}
         for dim, tag in gaps:
             pts = gmsh.model.getBoundary([(1, abs(tag))], combined=False,
@@ -144,18 +92,7 @@ def build(coarse=False):
         print(f"grouped into {len(groups)} disjoint loop(s): "
               f"{sorted((len(v) for v in groups.values()), reverse=True)}")
 
-        # A loop's own bounding-box "reach" (max abs coordinate over its
-        # points) distinguishes an OUTER boundary (the far-field box rim,
-        # reaching ~FAR) from an INNER hole (an aircraft body's footprint,
-        # reaching only a few tens of ft). This matters structurally, not
-        # just cosmetically: one outer loop + N inner holes bound ONE
-        # annular flat region and MUST go into a single addPlaneSurface
-        # call as [outer, inner1, inner2, ...] -- treating each disjoint
-        # group as its own independent patch (the original approach) is
-        # only correct when the holes truly don't nest, and produced a
-        # broken, self-intersecting "outer" patch here that choked the 3D
-        # boundary-recovery step (confirmed 2026-08-09: the box's rim and
-        # an aircraft footprint hole are exactly this outer/inner case).
+        # a loop's bounding-box reach (max abs coordinate) distinguishes an OUTER boundary (far-field box rim, reaching ~FAR) from an INNER hole (an aircraft body's footprint, a few tens of ft) -- one outer loop + N inner holes bound ONE annular region and must go into a single addPlaneSurface([outer, inner1, ...]) call, not separate patches (which produced a self-intersecting outer patch that choked 3D boundary recovery)
         def reach(tags):
             r = 0.0
             for t in tags:
@@ -175,10 +112,7 @@ def build(coarse=False):
         inner_loops = [gmsh.model.geo.addCurveLoop(tags) for tags in inner_groups]
         patch = gmsh.model.geo.addPlaneSurface([outer_loop] + inner_loops)
         gmsh.model.geo.synchronize()
-        # Force the patch to mesh as one un-subdivided face -- a subdivided
-        # patch is what produced the razor-thin overlapping sliver in
-        # stage1 (its own remesh landed a node a hair off the shared
-        # boundary with its neighbour).
+        # force the patch to mesh as one un-subdivided face -- a subdivided patch produced the razor-thin overlapping sliver in stage1 (its remesh landed a node off its shared boundary)
         patch_pts = gmsh.model.getBoundary([(2, patch)], recursive=True)
         gmsh.model.geo.mesh.setSize(patch_pts, 10.0)
         gmsh.model.geo.synchronize()
@@ -195,12 +129,7 @@ def build(coarse=False):
     gmsh.model.addPhysicalGroup(2, sym_surfs, name="symmetry")
     gmsh.model.addPhysicalGroup(2, far_surfs, name="farfield")
 
-    # Non-uniform sizing (per the plan agreed 2026-08-08): fine only where
-    # curvature/pressure gradients are sharp (wing/tail leading edges), not
-    # uniformly fine everywhere -- the fuselage is a big smooth barrel that
-    # doesn't need wing-nose-grade resolution, and stage2 is already a much
-    # bigger model than stage1 (memory budget: 10GB WSL limit / 11.7KB/node
-    # measured on stage1 -> ~850k node ceiling).
+    # non-uniform sizing: fine only where curvature/pressure gradients are sharp (wing/tail LEs), not the smooth fuselage barrel -- memory budget is 10GB WSL / 11.7KB per node (measured on stage1) -> ~850k node ceiling
     size_min = 0.05 * scale
     size_max = 15.0 * scale
     gmsh.option.setNumber("Mesh.MeshSizeMin", size_min)
@@ -211,9 +140,7 @@ def build(coarse=False):
     gmsh.option.setNumber("Mesh.Optimize", 1)
     gmsh.option.setNumber("Mesh.OptimizeNetgen", 1)
 
-    # Mesh 2D, clean up, THEN fill 3D -- stage1 found this ordering (not one
-    # monolithic generate(3) call) avoids a near-duplicate-triangle rejection
-    # at shared patch boundaries.
+    # mesh 2D, clean up, THEN fill 3D -- stage1 found this ordering avoids a near-duplicate-triangle rejection at shared patch boundaries
     gmsh.model.mesh.generate(2)
     gmsh.model.mesh.removeDuplicateNodes()
     gmsh.model.mesh.removeDuplicateElements()

@@ -1,24 +1,4 @@
-"""SU2 Euler config generator for the Stage 1 (wing+winglet) Mach sweep.
-
-Mesh is in METERS (make_mesh_euler2.py scales at export, Mesh.ScalingFactor
-0.3048) -- freestream state below is plain SI to match.
-
-Reference values: half-aircraft Sref (this is a half-model with a symmetry
-BC), full bref/cref, matching the rest of this project's VSPAERO convention
-(Sref=193.678 ft^2, bref=41.5324 ft, cref=5.0236 ft) so Stage 1's CL/CD/CM
-are directly comparable to the existing VSPAERO polars.
-
-Moment reference: wing ROOT LEADING EDGE (0,0,0) in this stage's own local
-frame -- the wing was built at local origin for this isolated wing-alone
-export, NOT at its true x=14.346 ft position in the full-aircraft frame
-(gen_v7.py). Fine for a stage-1-only pitching-moment TREND (dCm/dCL, AC
-shift with Mach) but will need reconciling to the full-aircraft frame if/
-when stage 2 (+fuselage) is built and compared directly.
-
-Freestream: FL410 ISA (matches drag_buildup.py / VSPAERO Re_Cref=8e6
-convention) -- T=216.65 K, p=17872 Pa (barometric, isothermal layer above
-36089 ft tropopause).
-"""
+"""SU2 Euler config generator for the Stage 1 (wing+winglet) Mach sweep: mesh is in METERS (Mesh.ScalingFactor 0.3048 in make_mesh_euler2.py) so freestream state below is plain SI; Sref is HALF the full-aircraft area (half-model + symmetry BC) while bref/cref stay full, matching VSPAERO convention (193.678/41.5324/5.0236 ft); moment reference is the wing ROOT LE in this stage's own local frame (NOT the true x=14.346 ft full-aircraft position, gen_v7.py) -- fine for a stage-1 pitching-moment TREND but needs reconciling once stage 2 (+fuselage) is compared directly; freestream is FL410 ISA (T=216.65K, p=17872 Pa, matching drag_buildup.py/VSPAERO Re_Cref=8e6)."""
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -102,8 +82,7 @@ SCREEN_WRT_FREQ_INNER= 25
 
 
 def write_config(tag, mach, aoa, mesh_file, iters=3000, restart_from=None):
-    """restart_from: tag of the previous sweep point to chain from, or None
-    for a cold start (uniform freestream)."""
+    """restart_from: tag of the previous sweep point to chain from, or None for a cold start (uniform freestream)."""
     restart = "YES" if restart_from else "NO"
     sol_in = f"restart_{restart_from}.dat" if restart_from else "solution_flow.dat"
     body = BASE.format(
@@ -118,8 +97,7 @@ def write_config(tag, mach, aoa, mesh_file, iters=3000, restart_from=None):
 
 
 if __name__ == "__main__":
-    # quick single-point sanity config: design condition, coarse mesh, low
-    # iteration cap -- just confirms SU2 accepts the mesh and runs.
+    # quick single-point sanity config: design condition, coarse mesh, low iteration cap -- just confirms SU2 accepts the mesh and runs
     write_config("sanity_M080", mach=0.80, aoa=3.7,
                  mesh_file="coarse_euler2.su2", iters=200)
     print("wrote cfg_sanity_M080.cfg")

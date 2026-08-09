@@ -1,8 +1,4 @@
-"""Side + plan outline of the fuselage/fairing, v3 vs v4, from the station tables
-used to drive the OpenVSP loft. Diagnostic for the 'plastic surgery' pass.
-
-Usage: python plot_outline_v3_v4.py out.png
-"""
+"""Fuselage/fairing outline, v3 vs v4, from the OpenVSP loft station tables (diagnostic for the 'plastic surgery' pass). Usage: python plot_outline_v3_v4.py out.png"""
 import sys
 import numpy as np
 import matplotlib
@@ -49,7 +45,6 @@ for ax, (x, d, z, bx, bw, bh, bz, c, lab) in zip(
     ax.plot(x, -d / 2, "-", color=c, alpha=0.35, lw=1, label="half-width (plan)")
     ax.plot(bx, bw / 2, "--", color="tab:red", alpha=0.45, lw=1)
     ax.plot(bx, -bw / 2, "--", color="tab:red", alpha=0.45, lw=1)
-    # wing root chord, nacelle, VT root for context
     ax.axvspan(19.0, 25.9, color="k", alpha=0.05)
     ax.text(22.4, -4.6, "wing root chord", ha="center", fontsize=8, color="0.35")
     ax.axvline(10.4, color="0.7", ls=":", lw=1)
