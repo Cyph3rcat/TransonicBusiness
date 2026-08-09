@@ -18,6 +18,5 @@ if __name__ == "__main__":
               ch7_10.fig_10_2, ch7_10.fig_10_3):
         f()
     print("chapter 11:")
-    for f in (ch11.fig_11_1, ch11.fig_11_2, ch11.fig_11_3):
-        f()
+    ch11.fig_11_1()
     print("done.")

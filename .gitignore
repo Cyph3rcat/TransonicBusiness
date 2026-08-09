@@ -10,6 +10,7 @@
 /thoughts/
 /airfoils/fixes for plane.txt
 /airfoils/- run our current wing through vsp.txt
+/fuselage/
 
 # --- Reference literature (not original work; kept locally only, not redistributed) ---
 *.pdf
@@ -26,3 +27,4 @@ __pycache__/
 .vsptime
 .DS_Store
 Thumbs.db
+
