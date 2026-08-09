@@ -1,0 +1,84 @@
+// Stage 1 SU2 geometry export: MainWing + winglet ONLY, single semispan
+// (Sym_Planar_Flag off), built fresh from the same parameters as
+// 11_full_v7/gen_v7.py's wing block (final v7: sweep 18.5, dihedral 2.3,
+// span/chords per the converged tail/CG solve). Exported as STEP for gmsh
+// OCC import.
+//
+// v3 (2026-08-08): reverted to gen_v7.py's ORIGINAL single-panel winglet
+// (the 4-way crease subdivision from the RANS attempt is gone) and added a
+// clean, uniform TE truncation (sc20412_blunt_te.dat, built by
+// trim-and-cut, not scaling). Both were mid-session additions made to chase
+// RANS-specific boundary-layer failures (a sharp crease can't take ANY
+// offset, and a near-zero TE gap can't take one either) -- neither concern
+// applies to Euler, which needs no boundary layer, so both are reverted per
+// the decision to stop trial-and-error patching and instead simplify back
+// toward the real design. The crease subdivision was ALSO implicated in a
+// later Euler-only failure (an overlapping-facet pair right at the old
+// break station, y=20.8), so removing it addresses that too, not just the
+// original RANS motivation.
+void main()
+{
+    string wid = AddGeom( "WING", "" );
+    SetGeomName( wid, "MainWing" );
+    SetParmVal( wid, "X_Rel_Location", "XForm", 0.0 );
+    SetParmVal( wid, "Y_Rel_Location", "XForm", 0.0 );
+    SetParmVal( wid, "Z_Rel_Location", "XForm", 0.0 );
+    SetParmVal( wid, "Sym_Planar_Flag", "Sym", 0 );  // single semispan for a half-model CFD domain
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 18.5 );
+    SetParmVal( wid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 2.3 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_1", 45 );
+    // Ported from the user's GUI experiment (2026-08-08), see
+    // export_wing_cfdmesh.vspscript for the full note.
+    SetParmVal( wid, "InCluster", "XSec_1", 1.457 );
+    SetParmVal( wid, "Tess_W", "Shape", 61 );
+    Update();
+    InsertXSec( wid, 1, XS_FILE_AIRFOIL );
+    SetDriverGroup( wid, 2, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_2", 2.40 );
+    SetParmVal( wid, "Sweep", "XSec_2", 31.0 );
+    SetParmVal( wid, "Sweep_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_2", 70.0 );
+    SetParmVal( wid, "Twist", "XSec_2", -5.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_2", 14 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_2", 0.95 );
+    Update();
+
+    // Mesh-only TE truncation: clean cut at x/c=0.95 (a modest, uniform
+    // station -- ~0.87% chord gap vs. the source's 0.55%), built by
+    // trimming and connecting, not scaling (an earlier scaling-based
+    // attempt distorted the loft and made things worse). Does NOT touch
+    // the shared airfoils/dat_clean file.
+    string af_file = "sc20412_blunt_te.dat";
+    string wsurf = GetXSecSurf( wid, 0 );
+    for ( int i = 0; i <= 2; i++ )
+    {
+        ChangeXSecShape( wsurf, i, XS_FILE_AIRFOIL );
+        ReadFileAirfoil( GetXSec( wsurf, i ), af_file );
+    }
+    Update();
+
+    Print( "Wing+winglet semispan area (expect ~100.88, half of 201.76): " +
+           GetParmVal( wid, "TotalArea", "WingGeom" ) );
+
+    WriteVSPFile( "wing_winglet.vsp3", SET_ALL );
+
+    ExportFile( "wing_winglet.stp", SET_ALL, EXPORT_STEP );
+    Print( "STEP EXPORT DONE" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

@@ -1,0 +1,293 @@
+// Stage 2 SU2 surface export: wing+winglet + fuselage + belly fairing + tail
+// (vertical tail, dorsal fin, horizontal tail). NO nacelle/pylon -- those are
+// Stage 3, deliberately isolated so (stage3 - stage2) measures the OTWEM
+// installation penalty on its own.
+//
+// Geometry is copied VERBATIM from the actually-executed
+// 11_full_v7/final_alpha/build_run.vspscript -- not from config.md's D.7
+// narrative table, which documents an earlier point in the coupled tail/CG
+// solve (S_HT=34.0/S_VT=45.0) that doesn't match what final_alpha actually
+// built (S_HT=29.1/S_VT=43.2, wing root LE=14.3464). final_alpha is the real,
+// executed geometry -- ground truth. The config.md/limitations.md mismatch is
+// worth its own doubts.md entry later; not blocking this export.
+//
+// Full aircraft convention preserved (unlike stage1, which forced a single
+// semispan): MainWing/VertTail/DorsalFin/HorizTail keep OpenVSP's default
+// symmetry (mirrored where the type calls for it), and CfdMeshAnalysis's own
+// GenerateHalfMesh=1 clips to y>=0 at export time -- the same pattern
+// gen_v7.py's VSPAERO passes already use, now going through the real solid
+// CFDMesh triangulation instead of a thin-panel VLM for the first time.
+//
+// Known risk (flagged in gen_v7.py's own comments, never tested against a
+// real solid mesher before now): the dorsal fin's fixed 6.2 ft root chord
+// overlaps the vertical tail's (resizable) root. In a VLM that's a harmless
+// interpenetrating thin panel; in a real watertight solid mesh it may be a
+// genuine boolean-intersection defect. Watch for it in the CFDMesh output;
+// the dorsal fin is a known-droppable component if it can't be resolved
+// (gen_v7.py already treats it as optional/exclude-able, and prior VLM work
+// found it only helps at large sideslip, not the small-beta stability slope).
+void main()
+{
+    //================= Fuselage (final_alpha geometry, verbatim) =============//
+    string fid = AddGeom( "FUSELAGE", "" );
+    SetGeomName( fid, "Fuselage" );
+    SetParmVal( fid, "Length", "Design", 42.2 );
+    Update();
+    string fsurf = GetXSecSurf( fid, 0 );
+    while ( GetNumXSec( fsurf ) > 7 ) { CutXSec( fid, 1 ); }
+    while ( GetNumXSec( fsurf ) < 7 ) { InsertXSec( fid, 1, XS_ELLIPSE ); }
+    Update();
+    for ( int i = 0; i < 7; i++ ) { ChangeXSecShape( fsurf, i, XS_ELLIPSE ); }
+    Update();
+
+    array<double> fx = { 0.00000, 5.73700, 10.85200, 17.00000, 23.40000, 30.50000, 42.20000 };
+    array<double> fz = { -1.92850, -1.11490, 0.00000, 0.00000, 0.00000, 0.47690, 1.79560 };
+    array<double> fh = { 1.18617, 3.70512, 6.04571, 6.10000, 6.10000, 4.69600, 0.60000 };
+    array<double> fw = { 1.15014, 4.88275, 5.70454, 6.10000, 6.10000, 4.69600, 0.60000 };
+    array<double> fta = { 28.42105, 28.42105, -4.73684, 0.00000, 0.00000, 0.00000, 2.36842 };
+    array<double> fba = { 30.78947, 0.00000, -4.73684, 0.00000, 0.00000, 0.00000, -11.84211 };
+    array<double> fsa = { 56.84211, 7.10526, 4.73684, 0.00000, 0.00000, 0.00000, -45.00000 };
+    array<double> fst = { 0.75000, 1.00000, 1.00000, 1.00000, 1.00000, 1.00000, 0.75000 };
+    array<double> ftb = { 0.00000, 0.00000, 1.00000, 1.00000, 1.00000, 1.00000, 0.00000 };
+
+    for ( int pass = 0; pass < 4; pass++ )
+    {
+        for ( int k = 0; k < 7; k++ )
+        {
+            int i = k;
+            if ( pass % 2 == 0 ) { i = 7 - 1 - k; }
+            SetParmVal( fid, "XLocPercent", "XSec_" + i, fx[i] / 42.2 );
+            SetParmVal( fid, "ZLocPercent", "XSec_" + i, fz[i] / 42.2 );
+            Update();
+        }
+    }
+    for ( int i = 0; i < 7; i++ )
+    {
+        SetParmVal( fid, "Ellipse_Height", "XSecCurve_" + i, fh[i] );
+        SetParmVal( fid, "Ellipse_Width",  "XSecCurve_" + i, fw[i] );
+        SetParmVal( fid, "TBSym", "XSec_" + i, ftb[i] );
+        SetParmVal( fid, "TopLAngleSet",     "XSec_" + i, 1 );
+        SetParmVal( fid, "TopLStrengthSet",  "XSec_" + i, 1 );
+        SetParmVal( fid, "BottomLAngleSet",  "XSec_" + i, 1 );
+        SetParmVal( fid, "BottomLStrengthSet", "XSec_" + i, 1 );
+        SetParmVal( fid, "TopLAngle",      "XSec_" + i, fta[i] );
+        SetParmVal( fid, "BottomLAngle",   "XSec_" + i, fba[i] );
+        SetParmVal( fid, "LeftLAngle",     "XSec_" + i, fsa[i] );
+        SetParmVal( fid, "RightLAngle",    "XSec_" + i, fsa[i] );
+        SetParmVal( fid, "TopLStrength",    "XSec_" + i, fst[i] );
+        SetParmVal( fid, "BottomLStrength", "XSec_" + i, fst[i] );
+        SetParmVal( fid, "LeftLStrength",   "XSec_" + i, fst[i] );
+        SetParmVal( fid, "RightLStrength",  "XSec_" + i, fst[i] );
+        Update();
+    }
+    SetParmVal( fid, "CapUMinOption", "EndCap", 2 );
+    SetParmVal( fid, "CapUMinLength", "EndCap", 1.0 );
+    SetParmVal( fid, "CapUMinStrength", "EndCap", 1.0 );
+    SetParmVal( fid, "CapUMaxOption", "EndCap", 2 );
+    SetParmVal( fid, "CapUMaxLength", "EndCap", 0.5 );
+    SetParmVal( fid, "CapUMaxStrength", "EndCap", 0.5 );
+    // Tess_U/W here only govern the degenerate/render surface, same lesson as
+    // stage1's Tess_W dead-end -- left at final_alpha's values for continuity,
+    // real resolution is controlled by CFDMesh's MinLen/BaseLen/MaxGap below.
+    SetParmVal( fid, "Tess_U", "Shape", 61 );
+    SetParmVal( fid, "Tess_W", "Shape", 33 );
+    Update();
+
+    //======================= Belly fairing (verbatim) ========================//
+    string bid = AddGeom( "FUSELAGE", "" );
+    SetGeomName( bid, "BellyFairing" );
+    SetParmVal( bid, "Length", "Design", 17.5 );
+    SetParmVal( bid, "X_Rel_Location", "XForm", 16.0 + ( -4.6536 ) );
+    SetParmVal( bid, "Z_Rel_Location", "XForm", -2.20 );
+    Update();
+    string bsurf = GetXSecSurf( bid, 0 );
+    for ( int i = 1; i <= 3; i++ ) { ChangeXSecShape( bsurf, i, XS_ROUNDED_RECTANGLE ); }
+    Update();
+    array<double> bx = { 0.0,  3.5,  7.80, 13.5, 17.5 };
+    array<double> bw = { 0.00, 5.30, 7.00, 5.60, 0.00 };
+    array<double> bh = { 0.00, 2.20, 2.85, 2.40, 0.00 };
+    array<double> br = { 0.00, 1.00, 1.30, 1.10, 0.00 };
+    array<double> bz = { 0.25, 0.05, 0.00, 0.32, 1.20 };
+    for ( int pass = 0; pass < 4; pass++ )
+    {
+        for ( int k = 0; k <= 4; k++ )
+        {
+            int i = k;
+            if ( pass % 2 == 0 ) { i = 4 - k; }
+            SetParmVal( bid, "XLocPercent", "XSec_" + i, bx[i] / 17.5 );
+            SetParmVal( bid, "ZLocPercent", "XSec_" + i, bz[i] / 17.5 );
+            Update();
+        }
+    }
+    for ( int i = 1; i <= 3; i++ )
+    {
+        SetParmVal( bid, "RoundedRect_Width",    "XSecCurve_" + i, bw[i] );
+        SetParmVal( bid, "RoundedRect_Height",   "XSecCurve_" + i, bh[i] );
+        SetParmVal( bid, "RoundRectXSec_Radius", "XSecCurve_" + i, br[i] );
+    }
+    SetParmVal( bid, "Tess_U", "Shape", 25 );
+    SetParmVal( bid, "Tess_W", "Shape", 37 );
+    Update();
+
+    //==================== Main wing + winglet (verbatim) =====================//
+    // NOTE: Sym_Planar_Flag left at its default (mirrored) -- this is a FULL
+    // aircraft build, not stage1's forced single semispan. CfdMeshAnalysis's
+    // GenerateHalfMesh clips to y>=0 at export time instead.
+    string wid = AddGeom( "WING", "" );
+    SetGeomName( wid, "MainWing" );
+    SetParmVal( wid, "X_Rel_Location", "XForm", 19.0 + ( -4.6536 ) );
+    SetParmVal( wid, "Z_Rel_Location", "XForm", -2.6 );
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 18.5 );
+    SetParmVal( wid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 2.3 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_1", 45 );
+    // Ported from stage1's fine-mesh root fix (2026-08-08 GUI experiment,
+    // never closed the crack there -- the ROOT CAUSE was the y=0 cap
+    // triangulation, not this -- but keeping it costs nothing and stage2's
+    // wing root is a real cut through a mirrored wing now, not the
+    // degenerate case stage1 had).
+    SetParmVal( wid, "InCluster", "XSec_1", 1.457 );
+    SetParmVal( wid, "Tess_W", "Shape", 41 );
+    Update();
+    InsertXSec( wid, 1, XS_FILE_AIRFOIL );
+    SetDriverGroup( wid, 2, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_2", 2.40 );
+    SetParmVal( wid, "Sweep", "XSec_2", 31.0 );
+    SetParmVal( wid, "Sweep_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_2", 70.0 );
+    SetParmVal( wid, "Twist", "XSec_2", -5.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_2", 14 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_2", 0.95 );
+    Update();
+    // Same mesh-only blunt-TE truncation as stage1 (avoids zero-area TE
+    // slivers at the winglet's small tip chord) -- NOT the shared clean dat.
+    string af_file = "sc20412_blunt_te.dat";
+    string wsurf = GetXSecSurf( wid, 0 );
+    for ( int i = 0; i <= 2; i++ )
+    {
+        ChangeXSecShape( wsurf, i, XS_FILE_AIRFOIL );
+        ReadFileAirfoil( GetXSec( wsurf, i ), af_file );
+    }
+    Update();
+
+    //=================== Vertical tail (final_alpha, verbatim) ===============//
+    string vid = AddGeom( "WING", "" );
+    SetGeomName( vid, "VertTail" );
+    SetParmVal( vid, "X_Rel_Location", "XForm", 31.6000 );
+    SetParmVal( vid, "Z_Rel_Location", "XForm", 2.0 );
+    SetParmVal( vid, "X_Rel_Rotation", "XForm", 90.0 );
+    SetParmVal( vid, "Sym_Planar_Flag", "Sym", 0 );
+    SetDriverGroup( vid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( vid, "Span", "XSec_1", 6.7858 );
+    SetParmVal( vid, "Root_Chord", "XSec_1", 7.9320 );
+    SetParmVal( vid, "Tip_Chord", "XSec_1", 4.8005 );
+    SetParmVal( vid, "Sweep", "XSec_1", 35.0 );
+    SetParmVal( vid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( vid, "Dihedral", "XSec_1", 0.0 );
+    SetParmVal( vid, "Twist", "XSec_1", 0.0 );
+    SetParmVal( vid, "SectTess_U", "XSec_1", 20 );
+    Update();
+
+    //======================== Dorsal fin -- OMITTED this pass ================//
+    // CfdMeshAnalysis crashed silently (process exited, no .stl/.msh written,
+    // no error text -- died inside OpenVSP's own C++ intersection code before
+    // control ever returned to this script) on the first attempt with the
+    // dorsal fin included. This is exactly the risk flagged going in:
+    // gen_v7.py's own comments note the dorsal's fixed 6.2 ft root chord
+    // overlaps the (resizable) vertical tail root -- harmless as
+    // interpenetrating thin VLM panels, never previously tested against a
+    // real watertight solid mesher. Dropping it to isolate whether that's the
+    // cause. The dorsal fin is already a documented optional/exclude-able
+    // component in gen_v7.py (COMPONENTS list, --exclude mechanism) and prior
+    // VLM work found it only helps at large sideslip, not the small-beta
+    // Cnbeta slope this project actually cares about -- so it is low-cost to
+    // drop for the CFD geometry even if this diagnosis is confirmed.
+
+    //================= Horizontal tail (final_alpha, verbatim) ===============//
+    string hid = AddGeom( "WING", "" );
+    SetGeomName( hid, "HorizTail" );
+    SetParmVal( hid, "X_Rel_Location", "XForm", 37.1343 );
+    SetParmVal( hid, "Z_Rel_Location", "XForm", 8.7858 );
+    SetDriverGroup( hid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( hid, "Span", "XSec_1", 5.7029 );
+    SetParmVal( hid, "Root_Chord", "XSec_1", 3.4517 );
+    SetParmVal( hid, "Tip_Chord", "XSec_1", 1.6509 );
+    SetParmVal( hid, "Sweep", "XSec_1", 20.0 );
+    SetParmVal( hid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( hid, "Dihedral", "XSec_1", 0.0 );
+    SetParmVal( hid, "Twist", "XSec_1", 0.0 );
+    SetParmVal( hid, "SectTess_U", "XSec_1", 20 );
+    Update();
+
+    Print( "Wing+winglet area (expect 201.76 incl winglet, full span): " +
+           GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "VT area (expect 43.20): " + GetParmVal( vid, "TotalArea", "WingGeom" ) );
+    Print( "HT area (expect 29.10, full span): " + GetParmVal( hid, "TotalArea", "WingGeom" ) );
+    WriteVSPFile( "stage2_wing_fuselage_tail.vsp3", SET_ALL );
+
+    //================= CFD Mesh: watertight half-model export ================//
+    // Far-field box sized for the FULL aircraft (fuselage length 42.2 ft, not
+    // just the wing's 6.9 ft root chord) -- >= 20 lengths / 6 spans keeps the
+    // same margin rule stage1 used, scaled to the bigger body. 400 ft chosen
+    // (>= 20*42.2=844... too big; use semispan/chord-based rule instead: 20
+    // chords using MAC=5.02 -> 100 ft min, 6 semispans using 20.77 -> 125 ft
+    // min). Keep stage1's proven 300 ft box -- already >= both minimums and
+    // known to mesh cleanly.
+    SetCFDMeshVal( CFD_FAR_FIELD_FLAG, 1 );
+    SetCFDMeshVal( CFD_HALF_MESH_FLAG, 1 );
+    SetCFDMeshVal( CFD_FAR_SIZE_ABS_FLAG, 1 );
+    SetCFDMeshVal( CFD_FAR_LENGTH, 300.0 );
+    SetCFDMeshVal( CFD_FAR_WIDTH, 300.0 );
+    SetCFDMeshVal( CFD_FAR_HEIGHT, 300.0 );
+    SetCFDMeshVal( CFD_FAR_MAX_EDGE_LEN, 15.0 );
+    SetCFDMeshVal( CFD_FAR_MAX_GAP, 1.0 );
+    SetCFDMeshVal( CFD_FAR_NUM_CIRCLE_SEGS, 20.0 );
+
+    string an = "CfdMeshAnalysis";
+    SetAnalysisInputDefaults( an );
+    array<int> sidx = { 0 };  SetIntAnalysisInput( an, "SelectedSetIndex", sidx );
+    array<int> half = { 1 };  SetIntAnalysisInput( an, "GenerateHalfMesh", half );
+    // COARSER than stage1's finished fine settings deliberately -- this is a
+    // much bigger model (fuselage + tail added) and the plan (per user,
+    // 2026-08-08) is non-uniform resolution: fine only where curvature/
+    // pressure gradients are sharp (wing LE), coarse on the fuselage's big
+    // smooth barrel. Starting at stage1's ORIGINAL coarse-pass settings
+    // (proven to mesh cleanly there) rather than its hard-won fine settings,
+    // to get a first watertight build before spending refinement effort.
+    array<double> minlen = { 0.06 };  SetDoubleAnalysisInput( an, "MinLen", minlen );
+    array<double> baselen = { 0.30 }; SetDoubleAnalysisInput( an, "BaseLen", baselen );
+    array<double> maxgap = { 0.02 };  SetDoubleAnalysisInput( an, "MaxGap", maxgap );
+    array<double> ncirc = { 24.0 };   SetDoubleAnalysisInput( an, "NCircSeg", ncirc );
+    array<double> growth = { 1.25 };  SetDoubleAnalysisInput( an, "GrowthRatio", growth );
+    array<int> stlf = { 1 }; SetIntAnalysisInput( an, "STLFileFlag", stlf );
+    array<int> gmshf = { 1 }; SetIntAnalysisInput( an, "GMSHFileFlag", gmshf );
+    array<int> trif = { 0 }; SetIntAnalysisInput( an, "TRIFileFlag", trif );
+    array<int> objf = { 0 }; SetIntAnalysisInput( an, "OBJFileFlag", objf );
+    array<int> polyf = { 0 }; SetIntAnalysisInput( an, "POLYFileFlag", polyf );
+    array<int> facetf = { 0 }; SetIntAnalysisInput( an, "FACETFileFlag", facetf );
+    array<string> stlname = { "stage2_cfdmesh.stl" };
+    SetStringAnalysisInput( an, "STLFileName", stlname );
+    array<string> gmshname = { "stage2_cfdmesh.msh" };
+    SetStringAnalysisInput( an, "GMSHFileName", gmshname );
+
+    PrintAnalysisInputs( an );
+    Print( "--> running CfdMeshAnalysis" );
+    string resid = ExecAnalysis( an );
+    Print( "CFD MESH EXPORT DONE" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

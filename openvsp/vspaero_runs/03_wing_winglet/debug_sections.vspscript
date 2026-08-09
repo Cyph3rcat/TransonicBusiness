@@ -1,0 +1,23 @@
+void main()
+{
+    ReadVSPFile( "wing_v6_winglet.vsp3" );
+    array<string>@ geoms = FindGeoms();
+    string wid = geoms[0];
+    int nsec = GetNumXSec( GetXSecSurf( wid, 0 ) );
+    Print( "Num XSecs: " + nsec );
+    for ( int i = 1; i < nsec; i++ )
+    {
+        string grp = "XSec_" + i;
+        Print( grp + ": Span=" + GetParmVal( wid, "Span", grp )
+             + " Root=" + GetParmVal( wid, "Root_Chord", grp )
+             + " Tip=" + GetParmVal( wid, "Tip_Chord", grp )
+             + " Sweep=" + GetParmVal( wid, "Sweep", grp )
+             + " Dihedral=" + GetParmVal( wid, "Dihedral", grp )
+             + " Twist=" + GetParmVal( wid, "Twist", grp ) );
+    }
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

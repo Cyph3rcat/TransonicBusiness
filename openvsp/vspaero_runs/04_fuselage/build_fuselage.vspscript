@@ -1,0 +1,62 @@
+//==== Fuselage v1 — per fuselage/fuselage.md section 12 (2026-08-04) ====//
+// L = 42.2 ft, max dia 6.1 ft. Nose 0..10.4 ft: rounded ellipsoid/power-law
+// r/R=(x/Lnc)^0.6 (fuselage.md 1.3/6). Cabin 10.4..23.4 ft: constant 6.1.
+// Tail 23.4..42.2 ft: smooth taper + upsweep, lower-line angle ~14 deg
+// (target band 13-15 deg, fuselage.md section 7), closing at dia 1.2 ft,
+// centerline z=+2.4 ft.
+// Stations (x, dia, z): (0,pt,0)(1,1.50,0)(2.5,2.59,0)(5,3.93,0)(7.5,5.01,0)
+// (10.4,6.10,0)(23.4,6.10,0)(28,5.20,.35)(33,3.90,1.0)(38,2.50,1.75)
+// (42.2,pt,2.40)
+
+void main()
+{
+    string fid = AddGeom( "FUSELAGE", "" );
+    SetGeomName( fid, "Fuselage" );
+    SetParmVal( fid, "Length", "Design", 42.2 );
+    Update();
+
+    // default fuselage has XSec_0..XSec_4; add 6 more ellipse stations
+    string surf = GetXSecSurf( fid, 0 );
+    for ( int k = 0; k < 6; k++ )
+    {
+        InsertXSec( fid, 1, XS_ELLIPSE );
+    }
+    Update();
+
+    // make sure interior sections are all ellipses
+    for ( int i = 1; i <= 9; i++ )
+    {
+        ChangeXSecShape( surf, i, XS_ELLIPSE );
+    }
+    Update();
+
+    array<double> xloc = { 0.0, 1.0, 2.5, 5.0, 7.5, 10.4, 23.4, 28.0, 33.0, 38.0, 42.2 };
+    array<double> dia  = { 0.0, 1.50, 2.59, 3.93, 5.01, 6.10, 6.10, 5.20, 3.90, 2.50, 0.0 };
+    array<double> zloc = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.35, 1.00, 1.75, 2.40 };
+
+    for ( int i = 0; i <= 10; i++ )
+    {
+        string grp = "XSec_" + i;
+        SetParmVal( fid, "XLocPercent", grp, xloc[i] / 42.2 );
+        SetParmVal( fid, "ZLocPercent", grp, zloc[i] / 42.2 );
+        if ( i >= 1 && i <= 9 )
+        {
+            string cgrp = "XSecCurve_" + i;
+            SetParmVal( fid, "Ellipse_Width", cgrp, dia[i] );
+            SetParmVal( fid, "Ellipse_Height", cgrp, dia[i] );
+        }
+    }
+    SetParmVal( fid, "Tess_U", "Shape", 33 );
+    SetParmVal( fid, "Tess_W", "Shape", 24 );
+    Update();
+
+    Print( "Fuselage stations set. Length: " + GetParmVal( fid, "Length", "Design" ) );
+    WriteVSPFile( "fuselage_v1.vsp3", SET_ALL );
+    Print( "Wrote fuselage_v1.vsp3" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

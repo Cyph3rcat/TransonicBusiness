@@ -1,0 +1,23 @@
+// Check what sweep location wing_v5 actually used (LE=0 vs quarter-chord=0.25)
+void main()
+{
+    ReadVSPFile( "../archive/wing_v5_sc20412.vsp3" );
+    array<string>@ geoms = FindGeoms();
+    for ( int i = 0; i < int(geoms.size()); i++ )
+    {
+        string gid = geoms[i];
+        Print( "Geom: " + GetGeomName( gid ) );
+        Print( "  Sweep          = " + GetParmVal( gid, "Sweep", "XSec_1" ) );
+        Print( "  Sweep_Location = " + GetParmVal( gid, "Sweep_Location", "XSec_1" ) );
+        Print( "  Twist          = " + GetParmVal( gid, "Twist", "XSec_1" ) );
+        Print( "  Twist_Location = " + GetParmVal( gid, "Twist_Location", "XSec_1" ) );
+        Print( "  Dihedral       = " + GetParmVal( gid, "Dihedral", "XSec_1" ) );
+        Print( "  TotalArea      = " + GetParmVal( gid, "TotalArea", "WingGeom" ) );
+        Print( "  TotalSpan      = " + GetParmVal( gid, "TotalSpan", "WingGeom" ) );
+    }
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

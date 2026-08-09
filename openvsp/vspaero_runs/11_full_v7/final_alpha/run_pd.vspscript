@@ -1,0 +1,23 @@
+// Parasite-drag component buildup at the cruise design point, full_v7.
+// Same recipe as full_v6 (Raymer Ch.12 Eq. 12.24 via OpenVSP's ParasiteDrag
+// module). FL410, M0.80, ISA.
+void main()
+{
+    ReadVSPFile( "final_alpha.vsp3" );
+    Update();
+
+    string pd = "ParasiteDrag";
+    SetAnalysisInputDefaults( pd );
+    array<string> fn = { "cd0_v7_FL410_M080.csv" };
+    SetStringAnalysisInput( pd, "FileName", fn );
+    array<int> gs = { 0 };            SetIntAnalysisInput( pd, "GeomSet", gs );  // 0 = All
+    array<double> sref = { 193.678 }; SetDoubleAnalysisInput( pd, "Sref", sref );
+    array<int> rf = { 0 };            SetIntAnalysisInput( pd, "RefFlag", rf );  // 0 = manual Sref
+    array<double> alt = { 41000.0 };  SetDoubleAnalysisInput( pd, "Altitude", alt );
+    array<double> mach = { 0.80 };    SetDoubleAnalysisInput( pd, "Mach", mach );
+    array<double> vinf = { 774.5 };   SetDoubleAnalysisInput( pd, "Vinf", vinf );
+    array<int> sub = { 1 };           SetIntAnalysisInput( pd, "ExportSubCompFlag", sub );
+    ExecAnalysis( pd );
+    Print( "PD DONE" );
+    while ( GetNumTotalErrors() > 0 ) { ErrorObj err = PopLastError(); Print( err.GetErrorString() ); }
+}

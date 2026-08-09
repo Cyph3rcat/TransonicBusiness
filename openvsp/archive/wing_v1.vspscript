@@ -1,0 +1,67 @@
+//==== Wing v1 — built from config.md Part B canonical set (B.3) ====//
+// S = 193.7 ft^2 (B.2, GROUNDED formula pass)
+// AR = 8.9 (B.1, ASSUMPTION — HondaJet/Phenom average)
+// Taper (lambda) = 0.35 (B.1, PLACEHOLDER)
+// Airfoil = NASA SC(2)-0410 (supercritical, t/c=9.97%) — recommended 2026-08-02
+//   per config.md B.5's NeuralFoil + Korn-equation screen of 9 candidates.
+//   Loaded from file (see airfoils/candidates/sc20410_selig.dat) rather than
+//   the parametric NACA_4_SERIES type, since this section isn't a 4-digit form.
+//   NOTE: this is a recommendation (config.md B.1 tags it ASSUMPTION, not
+//   GROUNDED) -- swap the file path below if you lock in the NACA 64-209
+//   fallback instead (airfoils/candidates/naca64209.dat).
+// Sweep = 0 deg (config.md B.5: Korn eq. gives M_dd=0.826 at 0 deg for this
+//   airfoil, margin +0.026 over M0.80 -- no sweep needed on wave-drag grounds)
+// Dihedral = 5 deg (config.md B.1 PLACEHOLDER)
+// Twist = 0 deg (config.md B.1 PLACEHOLDER)
+//
+// NOT YET RUN/VERIFIED IN OPENVSP -- this file was edited without a local
+// OpenVSP install available to execute vspscript. ChangeXSecShape/
+// ReadFileAirfoil are the documented OpenVSP API calls for switching an
+// XSecCurve to a file-based airfoil, but double-check the printed
+// TotalArea/TotalSpan/errors after running before trusting this.
+//
+// OpenVSP has no units; all lengths below are entered as raw ft-valued
+// numbers so the reported Area/Span come out numerically equal to the
+// config.md values in ft^2/ft.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    //==== Drive the single section directly off span + root/tip chord ====//
+    // (half-span + full chords, since the default wing is XZ-mirrored)
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9094 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4183 );
+    SetParmVal( wid, "Sweep", "XSec_1", 0.0 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 5.0 );
+    SetParmVal( wid, "Twist", "XSec_1", 0.0 );
+    Update();
+
+    //==== Airfoil: NASA SC(2)-0410 (supercritical, t/c=9.97%), file-based, root + tip ====//
+    string af_file = "../airfoils/candidates/sc20410_selig.dat";
+    ChangeXSecShape( wid, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( wid, 1, XS_FILE_AIRFOIL );
+    ReadFileAirfoil( wid, 0, af_file );
+    ReadFileAirfoil( wid, 1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+    Print( "TotalChord/MAC: " + GetParmVal( wid, "TotalChord", "WingGeom" ) );
+
+    string fname = "wing_v1.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

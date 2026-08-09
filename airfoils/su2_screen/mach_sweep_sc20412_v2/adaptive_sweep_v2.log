@@ -1,0 +1,24 @@
+[sc20412_v2_M0p5922] running: M=0.5922, AoA0=-0.738, Re=5403825, warm-start-from=cold
+[sc20412_v2_M0p5922] DONE: iter=4499 rms_rho=-3.114 CL=0.2066 CD=0.00846
+[sc20412_v2_M0p6222] running: M=0.6222, AoA0=-0.79, Re=5677575, warm-start-from=restart_sc20412_v2_M0p5922.dat
+[sc20412_v2_M0p6222] DONE: iter=4499 rms_rho=-3.105 CL=0.2445 CD=0.00750
+  dCd/dM (last interval) = -0.0321  (Boeing threshold 0.1)
+[sc20412_v2_M0p6522] running: M=0.6522, AoA0=-0.846, Re=5951325, warm-start-from=restart_sc20412_v2_M0p6222.dat
+[sc20412_v2_M0p6522] DONE: iter=4499 rms_rho=-3.085 CL=0.1724 CD=0.01236
+  dCd/dM (last interval) = 0.1620  (Boeing threshold 0.1)
+  hockey-stick hit #1/2
+[sc20412_v2_M0p6822] running: M=0.6822, AoA0=-0.907, Re=6225075, warm-start-from=restart_sc20412_v2_M0p6522.dat
+[sc20412_v2_M0p6822] DONE: iter=4499 rms_rho=-3.060 CL=0.1338 CD=0.00999
+  dCd/dM (last interval) = -0.0789  (Boeing threshold 0.1)
+[sc20412_v2_M0p7122] running: M=0.7122, AoA0=-0.973, Re=6498825, warm-start-from=restart_sc20412_v2_M0p6822.dat
+[sc20412_v2_M0p7122] DONE: iter=4499 rms_rho=-3.031 CL=0.1044 CD=0.01060
+  dCd/dM (last interval) = 0.0202  (Boeing threshold 0.1)
+[sc20412_v2_M0p7422] running: M=0.7422, AoA0=-1.045, Re=6772575, warm-start-from=restart_sc20412_v2_M0p7122.dat
+[sc20412_v2_M0p7422] DONE: iter=4499 rms_rho=-2.999 CL=0.0762 CD=0.00956
+  dCd/dM (last interval) = -0.0344  (Boeing threshold 0.1)
+[sc20412_v2_M0p7722] running: M=0.7722, AoA0=-1.124, Re=7046325, warm-start-from=restart_sc20412_v2_M0p7422.dat
+[sc20412_v2_M0p7722] DONE: iter=4499 rms_rho=-2.992 CL=0.0334 CD=0.01177
+  dCd/dM (last interval) = 0.0737  (Boeing threshold 0.1)
+
+Wrote /home/cyph3r/mses_replacement/mach_sweep_v2/adaptive_sweep_results_v2.json (7 points)
+SWEEP_COMPLETE

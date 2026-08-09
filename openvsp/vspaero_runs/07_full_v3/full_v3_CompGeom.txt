@@ -1,0 +1,35 @@
+...Comp Geom...
+8 Num Comps
+12 Total Num Meshes
+18016 Total Num Tris
+
+Theo_Area   Wet_Area   Theo_Vol    Wet_Vol  Name
+  592.845    556.443    723.586    718.612  Fuselage       
+  102.840     58.718     41.523     25.085  BellyFairing   
+  413.299    352.213     79.466     71.655  MainWing       
+   56.838     56.272     32.530     32.530  Nacelle        
+   56.838     56.272     32.530     32.530  Nacelle        
+   11.595      6.063      1.232      0.682  Pylon          
+   11.595      6.063      1.232      0.682  Pylon          
+   86.245     65.402     16.640     13.352  VertTail       
+   25.810      5.824      3.548      0.847  VertTail       
+  105.643    104.168     12.342     12.342  HorizTail      
+-------------------------------------------------
+ 1463.549   1267.438    944.630    908.318  Totals         
+
+Tag_Theo_Area   Tag_Wet_Area    Tag_Name
+      592.845        556.443    Fuselage_S_Surf0
+      102.840         58.718    BellyFairing_S_Surf0
+      206.649        176.107    MainWing_S_Surf0
+      206.649        176.107    MainWing_S_Surf1
+       56.838         56.272    Nacelle_S_Surf0
+       56.838         56.272    Nacelle_S_Surf1
+       11.595          6.063    Pylon_S_Surf0  
+       11.595          6.063    Pylon_S_Surf1  
+       86.245         65.402    VertTail_S_Surf0
+       25.810          5.824    VertTail_S_Surf0
+       52.822         52.084    HorizTail_S_Surf0
+       52.822         52.084    HorizTail_S_Surf1
+WARNING: 2 open meshes merged
+     Merged: MainWing
+     Merged: HorizTail

@@ -1,0 +1,78 @@
+//==== Wing v6 baseline — SC(2)-0412, VSPAERO VLM run (2026-08-04) ====//
+// Geometry identical to wing_v5 EXCEPT one fix:
+//   Sweep_Location = 0.25 (quarter chord). v5 left the OpenVSP default (0 =
+//   leading edge), so v5's "13.8 deg" was actually applied at the LE, giving
+//   a true quarter-chord sweep of only ~10.8 deg. The 13.8 deg figure is a
+//   QUARTER-CHORD sweep (Lambda25 = arccos(M_dd/M_c)), so it must be applied
+//   at x/c = 0.25.
+// Planform: S=193.7 ft^2, b=41.5323 ft, cr=6.9086, ct=2.4180 (lambda=0.35),
+// Lambda25=13.8 deg, dihedral=3 deg, washout=-3 deg, SC(2)-0412 root+tip.
+//
+// VSPAERO: thin-surface (camber) VLM, alpha sweep -2..10 deg, M=0.30,
+// ReCref=8e6 (200 KTAS climb at 10 kft, MAC=5.024 ft).
+// Refs: Sref=193.7, bref=41.5323, cref=5.0236 (true MAC, not S/b).
+// Xcg = 3.868 ft = x of quarter-MAC (y_MAC=8.717 ft, LE sweep 16.68 deg).
+
+void main()
+{
+    string wid = AddGeom( "WING", "" );
+    SetGeomName( wid, "MainWing" );
+
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 13.8 );
+    SetParmVal( wid, "Sweep_Location", "XSec_1", 0.25 );   // the v5 fix
+    SetParmVal( wid, "Dihedral", "XSec_1", 3.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_1", 0.25 );
+    // spanwise tessellation up from default 6 for a usable load distribution
+    SetParmVal( wid, "SectTess_U", "XSec_1", 30 );
+    SetParmVal( wid, "Tess_W", "Shape", 41 );
+    Update();
+
+    //==== Airfoil: SC(2)-0412 root + tip ====//
+    string af_file = "../../../airfoils/dat_clean/sc20412_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    ReadFileAirfoil( GetXSec( xsec_surf, 0 ), af_file );
+    ReadFileAirfoil( GetXSec( xsec_surf, 1 ), af_file );
+    Update();
+
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target 41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+
+    WriteVSPFile( "wing_v6_baseline.vsp3", SET_ALL );
+
+    //==== VSPAERO geometry ====//
+    string cg = "VSPAEROComputeGeometry";
+    SetAnalysisInputDefaults( cg );
+    ExecAnalysis( cg );
+
+    //==== VSPAERO sweep ====//
+    string an = "VSPAEROSweep";
+    SetAnalysisInputDefaults( an );
+    array<double> sref = { 193.678 };   SetDoubleAnalysisInput( an, "Sref", sref );
+    array<double> bref = { 41.5324 };   SetDoubleAnalysisInput( an, "bref", bref );
+    array<double> cref = { 5.0236 };    SetDoubleAnalysisInput( an, "cref", cref );
+    array<double> xcg  = { 3.868 };     SetDoubleAnalysisInput( an, "Xcg", xcg );
+    array<double> a0   = { -2.0 };      SetDoubleAnalysisInput( an, "AlphaStart", a0 );
+    array<double> a1   = { 10.0 };      SetDoubleAnalysisInput( an, "AlphaEnd", a1 );
+    array<int>    na   = { 7 };         SetIntAnalysisInput( an, "AlphaNpts", na );
+    array<double> m0   = { 0.30 };      SetDoubleAnalysisInput( an, "MachStart", m0 );
+    array<int>    nm   = { 1 };         SetIntAnalysisInput( an, "MachNpts", nm );
+    array<double> re   = { 8000000.0 }; SetDoubleAnalysisInput( an, "ReCref", re );
+    array<int>    ncpu = { 6 };         SetIntAnalysisInput( an, "NCPU", ncpu );
+    array<int>    wni  = { 5 };         SetIntAnalysisInput( an, "WakeNumIter", wni );
+    PrintAnalysisInputs( an );
+    string rid = ExecAnalysis( an );
+    Print( "VSPAEROSweep done." );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

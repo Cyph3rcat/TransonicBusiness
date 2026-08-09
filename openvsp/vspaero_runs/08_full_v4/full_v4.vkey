@@ -1,0 +1,31 @@
+# VSPGEOM v3 Tag Key File
+C:/Users/cyphe/Downloads/airplane/openvsp/vspaero_runs/08_full_v4/full_v4.vspgeom
+11
+
+# part#,geom#,surf#,gname,gid,thick,plate,copy#,geomcopy#
+1,1,0,Fuselage_S,SMDQVKYGMW,1,0,1,2
+2,6,0,BellyFairing_S,AWJXUPYLYG,1,0,1,7
+3,3,0,MainWing_C,KWVUHAZDJV,0,3,1,4
+4,3,1,MainWing_C,KWVUHAZDJV,0,3,2,4
+5,0,0,Nacelle_S,YRAZNQPCSP,1,0,1,1
+6,0,1,Nacelle_S,YRAZNQPCSP,1,0,2,1
+7,4,0,Pylon_C,DBYYUOCZHX,0,3,1,5
+8,4,1,Pylon_C,DBYYUOCZHX,0,3,2,5
+9,5,0,VertTail_C,BESGIDUUDN,0,3,1,6
+10,2,0,HorizTail_C,OAHAJZFFHZ,0,3,1,3
+11,2,1,HorizTail_C,OAHAJZFFHZ,0,3,2,3
+
+11
+
+# tag#,part#,ssname1,ssname2,...,ssid1,ssid2,...
+1,1
+2,2
+3,3
+4,4
+5,5
+6,6
+7,7
+8,8
+9,9
+10,10
+11,11

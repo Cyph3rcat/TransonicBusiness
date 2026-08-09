@@ -1,0 +1,7 @@
+void main()
+{
+    ReadVSPFile( "full_v4.vsp3" );
+    ExportFile( "full_v4.obj", SET_ALL, EXPORT_OBJ );
+    Print( "wrote full_v4.obj" );
+    while ( GetNumTotalErrors() > 0 ) { ErrorObj err = PopLastError(); Print( err.GetErrorString() ); }
+}

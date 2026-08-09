@@ -1,0 +1,6 @@
+void main()
+{
+    ReadVSPFile( "final_alpha.vsp3" );
+    Update();
+    ExportFile( "full_v6.obj", SET_ALL, EXPORT_OBJ );
+}

@@ -1,0 +1,11 @@
+# VSP Tag Key File
+C:/Users/cyphe/downloads/airplane/openvsp/vspaero_runs/12_su2_v7/stage2_wing_fuselage_tail/stage2_wing_fuselage_tail.tkey
+7
+
+1,Fuselage_S_Surf0
+2,BellyFairing_S_Surf0
+3,MainWing_S_Surf0
+4,VertTail_S_Surf0
+5,HorizTail_S_Surf0
+6,SymPlane
+7,FarField

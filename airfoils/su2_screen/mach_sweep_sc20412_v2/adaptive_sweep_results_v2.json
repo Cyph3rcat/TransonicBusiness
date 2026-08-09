@@ -1,0 +1,93 @@
+[
+  {
+    "tag": "sc20412_v2_M0p5922",
+    "mach": 0.5922,
+    "aoa0": -0.738,
+    "final_iter": 4499,
+    "rms_rho": -3.113911,
+    "cl": 0.206584,
+    "cd": 0.00846,
+    "p_inf": 27339.7,
+    "rho_inf": 0.439608,
+    "v_inf": 174.742,
+    "restart_from": null
+  },
+  {
+    "tag": "sc20412_v2_M0p6222",
+    "mach": 0.6222,
+    "aoa0": -0.79,
+    "final_iter": 4499,
+    "rms_rho": -3.104655,
+    "cl": 0.244485,
+    "cd": 0.007498,
+    "p_inf": 27339.7,
+    "rho_inf": 0.439608,
+    "v_inf": 183.594,
+    "restart_from": "restart_sc20412_v2_M0p5922.dat"
+  },
+  {
+    "tag": "sc20412_v2_M0p6522",
+    "mach": 0.6522,
+    "aoa0": -0.846,
+    "final_iter": 4499,
+    "rms_rho": -3.084926,
+    "cl": 0.172405,
+    "cd": 0.012357,
+    "p_inf": 27339.7,
+    "rho_inf": 0.439608,
+    "v_inf": 192.446,
+    "restart_from": "restart_sc20412_v2_M0p6222.dat"
+  },
+  {
+    "tag": "sc20412_v2_M0p6822",
+    "mach": 0.6822,
+    "aoa0": -0.907,
+    "final_iter": 4499,
+    "rms_rho": -3.059725,
+    "cl": 0.133826,
+    "cd": 0.00999,
+    "p_inf": 27339.7,
+    "rho_inf": 0.439608,
+    "v_inf": 201.298,
+    "restart_from": "restart_sc20412_v2_M0p6522.dat"
+  },
+  {
+    "tag": "sc20412_v2_M0p7122",
+    "mach": 0.7122,
+    "aoa0": -0.973,
+    "final_iter": 4499,
+    "rms_rho": -3.030816,
+    "cl": 0.104433,
+    "cd": 0.010595,
+    "p_inf": 27339.7,
+    "rho_inf": 0.439608,
+    "v_inf": 210.15,
+    "restart_from": "restart_sc20412_v2_M0p6822.dat"
+  },
+  {
+    "tag": "sc20412_v2_M0p7422",
+    "mach": 0.7422,
+    "aoa0": -1.045,
+    "final_iter": 4499,
+    "rms_rho": -2.99898,
+    "cl": 0.076165,
+    "cd": 0.009562,
+    "p_inf": 27339.7,
+    "rho_inf": 0.439608,
+    "v_inf": 219.003,
+    "restart_from": "restart_sc20412_v2_M0p7122.dat"
+  },
+  {
+    "tag": "sc20412_v2_M0p7722",
+    "mach": 0.7722,
+    "aoa0": -1.124,
+    "final_iter": 4499,
+    "rms_rho": -2.992025,
+    "cl": 0.033372,
+    "cd": 0.011772,
+    "p_inf": 27339.7,
+    "rho_inf": 0.439608,
+    "v_inf": 227.855,
+    "restart_from": "restart_sc20412_v2_M0p7422.dat"
+  }
+]

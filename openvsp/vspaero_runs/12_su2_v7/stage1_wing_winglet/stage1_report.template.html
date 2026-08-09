@@ -1,0 +1,492 @@
+<title>Stage 1 — Wing + Winglet Transonic CFD</title>
+<style>
+  :root {
+    --paper:    #f4f6f8;
+    --surface:  #ffffff;
+    --ink:      #131a22;
+    --ink-soft: #4d596a;
+    --ink-faint:#7c8899;
+    --rule:     #dce1e8;
+    --rule-soft:#e9edf2;
+    --accent:   #2b6cb0;
+    --accent-wash: #eaf1f9;
+    --signal:   #c53030;
+    --signal-wash: #fbecec;
+    --caution:  #9c6510;
+    --caution-wash: #fdf3e2;
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:    #0d1218;
+      --surface:  #151d26;
+      --ink:      #e7ecf2;
+      --ink-soft: #9aa7b6;
+      --ink-faint:#6d7b8c;
+      --rule:     #243039;
+      --rule-soft:#1c252e;
+      --accent:   #74aade;
+      --accent-wash: #17242f;
+      --signal:   #ef8f8f;
+      --signal-wash: #2b1a1c;
+      --caution:  #dfab52;
+      --caution-wash: #2a2118;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:    #0d1218;
+    --surface:  #151d26;
+    --ink:      #e7ecf2;
+    --ink-soft: #9aa7b6;
+    --ink-faint:#6d7b8c;
+    --rule:     #243039;
+    --rule-soft:#1c252e;
+    --accent:   #74aade;
+    --accent-wash: #17242f;
+    --signal:   #ef8f8f;
+    --signal-wash: #2b1a1c;
+    --caution:  #dfab52;
+    --caution-wash: #2a2118;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0 20px 96px;
+  }
+
+  .wrap { max-width: 940px; margin: 0 auto; }
+  .measure { max-width: 68ch; }
+
+  /* ---- masthead ---- */
+  header {
+    padding: 56px 0 28px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 36px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--sans);
+    font-weight: 650;
+    letter-spacing: -0.025em;
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.1;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    color: var(--ink-soft);
+    font-size: 19px;
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 34px;
+    margin-top: 26px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .facts b {
+    display: block;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  /* ---- verdict ---- */
+  .verdict {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--signal);
+    padding: 26px 30px;
+    margin: 0 0 44px;
+  }
+  .verdict h2 { margin-top: 0; }
+  .bignum {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 36px;
+    margin: 22px 0 6px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .bignum div { min-width: 120px; }
+  .bignum span {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+  .bignum strong {
+    font-size: 30px;
+    font-weight: 550;
+    letter-spacing: -0.02em;
+  }
+  .margin-note { color: var(--signal); }
+
+  h2 {
+    font-family: var(--sans);
+    font-weight: 620;
+    letter-spacing: -0.02em;
+    font-size: 25px;
+    line-height: 1.2;
+    margin: 52px 0 14px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 18px;
+    margin: 32px 0 10px;
+  }
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); }
+
+  /* ---- data table ---- */
+  .tablewrap { overflow-x: auto; margin: 26px 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface);
+  }
+  th, td {
+    padding: 9px 14px;
+    text-align: right;
+    border-bottom: 1px solid var(--rule-soft);
+    white-space: nowrap;
+  }
+  th {
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--rule);
+  }
+  th:first-child, td:first-child { text-align: left; }
+  tr.cruise td {
+    background: var(--accent-wash);
+    font-weight: 600;
+  }
+  tr.suspect td { color: var(--ink-faint); }
+  .flag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: var(--caution-wash);
+    color: var(--caution);
+    border: 1px solid currentColor;
+  }
+
+  /* ---- figures ---- */
+  figure {
+    margin: 34px 0;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 18px;
+  }
+  figure img { width: 100%; height: auto; display: block; }
+  figcaption {
+    font-family: var(--sans);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule-soft);
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* ---- callouts ---- */
+  .note {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 18px 22px;
+    margin: 26px 0;
+  }
+  .note.warn { border-left-color: var(--caution); }
+  .note p:last-child { margin-bottom: 0; }
+  .note .label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .calc {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 16px 20px;
+    margin: 20px 0;
+    overflow-x: auto;
+    line-height: 1.9;
+  }
+  .calc em { color: var(--ink-faint); font-style: normal; }
+  .calc b { color: var(--accent); font-weight: 600; }
+
+  ul { padding-left: 20px; margin: 0 0 16px; }
+  li { margin-bottom: 9px; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--rule-soft);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  footer {
+    margin-top: 68px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.9;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Staged SU2 campaign · Stage 1 complete · Stage 2 attempted, blocked</p>
+  <h1>Wing + winglet, transonic</h1>
+  <p class="standfirst">Inviscid drag rise at constant cruise lift, M0.70&ndash;0.85. The first
+  CFD numbers on this airframe that survive a physics cross-check &mdash; and where the campaign
+  stands after Stage 2 hit a real, unresolved meshing defect.</p>
+  <div class="facts">
+    <div><span>Mesh</span><b>238,288 nodes</b></div>
+    <div><span>Wing skin</span><b>287,883 tris</b></div>
+    <div><span>Solver</span><b>SU2 8.5.0 Euler</b></div>
+    <div><span>Condition</span><b>FL410 ISA</b></div>
+    <div><span>Model</span><b>half, symmetry</b></div>
+  </div>
+</header>
+
+<section class="verdict">
+  <h2 style="margin-top:0">Drag divergence sits 0.009 above cruise</h2>
+  <div class="bignum">
+    <div><span>Cruise</span><strong>M 0.800</strong></div>
+    <div><span>Drag divergence</span><strong class="margin-note">M 0.809</strong></div>
+    <div><span>Cruise drag</span><strong>79.8 cts</strong></div>
+    <div><span>Span efficiency</span><strong>0.72</strong></div>
+  </div>
+  <p class="measure" style="margin-top:18px">That is a thin margin, but it is where transonic
+  aircraft are supposed to sit &mdash; cruising short of the knee wastes speed already paid for
+  in sweep and thickness. The concern is not the margin today; it is that fuselage and nacelles
+  usually push drag rise <em>down</em> in Mach, and there is no slack to absorb that in stages 2
+  and 3.</p>
+</section>
+
+<h2>The numbers</h2>
+<p class="measure">Drag at the lift the aircraft actually cruises at (CL&nbsp;=&nbsp;0.360). At each
+Mach, three angles of attack bracketing that lift were solved, a polar fitted, and drag read off
+the fit &mdash; so every figure below is interpolated inside solved data, never extrapolated past it.</p>
+
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr>
+      <th>Mach</th><th>CD (counts)</th><th>CD<sub>0</sub></th><th>e</th>
+      <th>points</th><th>fit residual</th><th style="text-align:left">status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>0.70</td><td>60.65</td><td>12.54</td><td>0.963</td><td>3</td><td>0.11 c</td><td style="text-align:left"></td></tr>
+    <tr><td>0.75</td><td>65.13</td><td>13.51</td><td>0.897</td><td>3</td><td>0.37 c</td><td style="text-align:left"></td></tr>
+    <tr><td>0.78</td><td>70.21</td><td>14.26</td><td>0.828</td><td>3</td><td>0.76 c</td><td style="text-align:left"></td></tr>
+    <tr class="cruise"><td>0.80</td><td>79.81</td><td>15.58</td><td>0.721</td><td>5</td><td>1.71 c</td><td style="text-align:left">cruise</td></tr>
+    <tr class="suspect"><td>0.82</td><td>111.62</td><td>13.12</td><td>0.470</td><td>3</td><td>2.27 c</td><td style="text-align:left"><span class="flag">split unreliable</span></td></tr>
+    <tr class="suspect"><td>0.85</td><td>237.97</td><td>114.24</td><td>0.374</td><td>3</td><td>1.84 c</td><td style="text-align:left"><span class="flag">split unreliable</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<figure>
+  <img src="{{FIG_DRAGRISE}}" alt="Drag coefficient against Mach number at constant lift coefficient 0.36, rising gently from 60 counts at Mach 0.70 to 80 counts at Mach 0.80, then climbing steeply to 238 counts at Mach 0.85. Vertical markers show cruise at Mach 0.80 and drag divergence at Mach 0.809." />
+  <figcaption><b>The drag rise.</b> Gentle through M0.80 &mdash; about 19 counts across the whole
+  M0.70&ndash;0.80 range &mdash; then the curve turns hard. Between M0.80 and M0.82 alone, drag adds
+  32 counts. Drag divergence, taken at the standard dCD/dM = 0.10 criterion, falls at M0.809.</figcaption>
+</figure>
+
+<h2>Why the drag rises</h2>
+<p class="measure">Splitting each polar into its two parts answers this, and the answer is not the
+obvious one. Zero-lift drag &mdash; the part that depends on how thick the wing is &mdash; barely
+moves: 12.5 to 15.6 counts across the entire subcritical range. What collapses is span efficiency,
+from 0.963 down to 0.721.</p>
+
+<p class="measure">So the shock is not forming because the wing is too fat. It forms because of how
+hard the upper surface is working to make lift. At cruise the arithmetic breaks down like this:</p>
+
+<div class="calc">
+<em>true induced drag</em> &nbsp;&nbsp;CL&sup2; / (&pi; · 0.963 · AR) &nbsp;=&nbsp; <b>48.1 counts</b><br />
+<em>lost to compressibility</em> &nbsp;&nbsp;same, at e = 0.721 &nbsp;&rarr;&nbsp; <b>+16.2 counts</b><br />
+<em>zero-lift</em> &nbsp;&nbsp;CD<sub>0</sub> at M0.80 &nbsp;=&nbsp; <b>15.6 counts</b> <em>(≈3.5 of which is numerical noise)</em><br />
+<em>total</em> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>79.8 counts</b>
+</div>
+
+<p class="measure">That is actionable. The lever is upper-surface shaping and cruise lift, not
+thinning the wing. It also means flying lighter or higher pays off more than proportionally.</p>
+
+<figure>
+  <img src="{{FIG_SPLIT}}" alt="Two stacked charts. The upper shows zero-lift drag staying near 13 counts from Mach 0.70 to 0.82 then jumping to 114 counts at Mach 0.85. The lower shows span efficiency falling steadily from 0.96 to 0.37, with grey bars showing the polar fit residual growing with Mach." />
+  <figcaption><b>Two mechanisms, one of them dominant.</b> Zero-lift drag (top) is flat where it
+  matters. Span efficiency (bottom, line) falls steadily &mdash; that is the drag rise. Grey bars are
+  the polar fit residual: while they stay under a count the model describes the flow, and past M0.80
+  they do not. The shaded band marks where the CD<sub>0</sub>/e split stops meaning anything.</figcaption>
+</figure>
+
+<figure>
+  <img src="{{FIG_POLARS}}" alt="Drag polars for six Mach numbers, lift coefficient against drag coefficient. The curves for Mach 0.70 through 0.80 cluster closely together, while Mach 0.82 and especially 0.85 shift far to the right, indicating much higher drag at the same lift." />
+  <figcaption><b>The same story as polars.</b> M0.70 through M0.80 sit almost on top of one another
+  &mdash; the horizontal gap between curves at the cruise lift line <em>is</em> the drag rise. M0.85
+  is a different regime entirely.</figcaption>
+</figure>
+
+<h2>About that cruise lift of 0.36</h2>
+<p class="measure">It is low, and that is worth understanding rather than accepting. It is not a
+choice &mdash; weight and altitude force it:</p>
+
+<div class="calc">
+<em>wing loading</em> &nbsp;&nbsp;11,660 lb / 193.678 ft&sup2; &nbsp;=&nbsp; <b>60.2 lb/ft&sup2;</b><br />
+<em>dynamic pressure</em> &nbsp;&nbsp;FL410, M0.80 &nbsp;=&nbsp; <b>167.2 lb/ft&sup2;</b><br />
+<em>cruise CL</em> &nbsp;&nbsp;60.2 / 167.2 &nbsp;=&nbsp; <b>0.360</b>
+</div>
+
+<p class="measure">Transport aircraft typically cruise nearer CL 0.5&ndash;0.6. This wing loading is
+roughly half theirs at comparable dynamic pressure, which is another way of saying <b>the wing is
+large for the weight it carries</b> &mdash; almost certainly the stall-speed requirement
+(Vs&nbsp;≈&nbsp;91&nbsp;kt) driving area, then that area having to fly around all day at cruise.</p>
+
+<div class="note">
+  <span class="label">What this says about wing size &mdash; and what it does not</span>
+  <p>The large wing costs cruise efficiency: <code>config.md</code> puts best L/D at
+  CL&nbsp;≈&nbsp;0.853 against an actual cruise L/D of 12.3&ndash;12.5 versus a possible 16.9. Lift
+  <em>does</em> govern shock strength &mdash; an earlier sweep run at CL 0.61 by mistake gave 259
+  counts at M0.80 instead of 80, with apparent drag divergence down at M0.74. Same wing, same mesh,
+  only the lift differed.</p>
+  <p>But re-evaluating the fitted polars at higher lift shows the drag-divergence Mach is far less
+  sensitive than that comparison suggests: a 20% smaller wing (CL&nbsp;0.45) moves it only
+  0.809&nbsp;&rarr;&nbsp;0.803. Drag <em>level</em> climbs steeply; the knee barely shifts. So there
+  is no strong transonic argument for keeping the wing large.</p>
+  <p><b>This campaign cannot settle wing sizing.</b> The prize for a smaller wing is reduced skin
+  friction, which is viscous and therefore invisible to an inviscid solve. These results show only
+  the penalty of shrinking (induced drag rising as span comes in), never the benefit. The trade needs
+  a real parasite-drag figure for the complete aircraft &mdash; which is what stages 2 and 3 exist to
+  produce.</p>
+</div>
+
+<figure>
+  <img src="{{FIG_LIFTCURVES}}" alt="Lift coefficient against angle of attack for six Mach numbers. All lines are straight and closely spaced, with slope increasing as Mach rises, so higher Mach reaches the same lift at a lower angle." />
+  <figcaption><b>Lift curves stay linear throughout.</b> Slope steepens with Mach, as compressibility
+  requires &mdash; the same lift arrives at a lower angle. Straightness matters here: it is what makes
+  interpolating to a target lift legitimate rather than wishful.</figcaption>
+</figure>
+
+<h2>What not to trust</h2>
+<ul class="measure">
+  <li><b>The CD<sub>0</sub> and e columns above M0.80.</b> Watch CD<sub>0</sub> go 15.6 → 13.1 → 114
+  counts. Zero-lift drag cannot fall then leap tenfold. Past drag divergence the flow stops following
+  a lift-squared law, so the fit shovels wave drag into whichever term will take it. The <em>total</em>
+  CD is unaffected &mdash; that is interpolated between real solved points, not model-dependent.</li>
+  <li><b>Everything is inviscid.</b> No skin friction, no boundary layer, no separation. Real drag is
+  higher; this describes pressure and wave behaviour only.</li>
+  <li><b>Wing and winglet only.</b> No fuselage, no engine, no tail. Interference drag &mdash; the
+  whole reason the over-wing engine layout needs checking &mdash; is not in these numbers.</li>
+  <li><b>The noise floor is about 3.5 counts</b>, measured as leftover drag at M0.60 where inviscid
+  theory says there should be essentially none. Treat differences smaller than that as nothing.</li>
+</ul>
+
+<div class="note warn">
+  <span class="label">How this data was nearly wrong</span>
+  <p>The first complete sweep ran at a fixed 3.7° angle of attack, a value inherited from VSPAERO, a
+  vortex-lattice code that does not model M0.80 compressibility properly. It reported CL 0.34 at that
+  angle; Euler gives 0.608. Holding angle fixed also lets lift climb with Mach (0.42&nbsp;→&nbsp;0.66),
+  which manufactures a drag rise that is partly just the lift increasing.</p>
+  <p>Every number on this page comes from holding <em>lift</em> constant and letting angle vary, which
+  is what the aircraft actually does.</p>
+</div>
+
+<h2>Stage 2 attempted, and stopped</h2>
+<p class="measure">Stage 2 (fuselage, belly fairing, wing/winglet, vertical/dorsal/horizontal
+tail &mdash; no nacelle or pylon yet) was attempted. Three real defects were found and fixed along
+the way, each a genuine bug rather than a tuning problem:</p>
+<ul class="measure">
+  <li>The dorsal fin's fixed root chord overlaps the (resizable) vertical tail root &mdash;
+  harmless as crossing thin panels in the VLM analysis this project used before, but it crashed
+  OpenVSP's own solid mesh engine outright the first time this geometry went through a real 3-D
+  mesher. Dropped from the CFD geometry; confirmed as the cause by re-running without it.</li>
+  <li>The T-tail junction (horizontal tail root meeting the swept vertical tail tip) formed a
+  patch with a boundary shape the mesher couldn't flatten into a 2-D parameter space. Confirmed
+  real 3-D surface, not a fake flat cap &mdash; fixed by loosening how aggressively the mesher
+  groups triangles into patches.</li>
+  <li>OpenVSP's own far-field-box triangulation proved unreliable in several different ways on
+  this bigger model. Fixed architecturally: stop trusting it, strip it out entirely, and rebuild
+  that one boundary face by hand with exact geometry instead.</li>
+</ul>
+<p class="measure">Where it's actually blocked: a genuine overlapping-facet defect &mdash; two
+triangles folded flat against each other, essentially a zero-degree fold &mdash; inside a large
+merged surface spanning the fuselage belly, the wing's lower surface, and the belly fairing
+together. This traces to something the project's own design notes already predicted before any
+of this CFD work began: the belly fairing meets the fuselage as a hard boolean join, not a
+smooth blend, and a sharp join like that was flagged as likely to cause exactly this kind of
+problem the first time it hit a real solver. This is that prediction landing.</p>
+<p class="measure"><b>Decision: stop here for now.</b> Stage 1 already answers the load-bearing
+question this campaign exists for &mdash; the wing's transonic behavior at the lift it actually
+flies at &mdash; and that answer stands on its own regardless of what happens with the rest of
+the aircraft. Stage 2 and Stage 3 (critically including the OTWEM nacelle installation penalty,
+still the single most important unanswered question for this configuration) remain open for a
+future pass, most likely needing the fairing/fuselage junction re-lofted as a real blend before
+the mesh will close. Logged in full as <code>doubts.md</code> #29.</p>
+
+<footer>
+  geometry &nbsp;<code>export_wing_cfdmesh.vspscript</code> &nbsp;&middot;&nbsp; volume mesh
+  &nbsp;<code>make_mesh_euler3.py</code><br />
+  campaign &nbsp;<code>dragrise_fixedcl.py</code> &nbsp;&middot;&nbsp; analysis
+  &nbsp;<code>analyze_dragrise.py</code> &nbsp;&middot;&nbsp; figures &nbsp;<code>plot_stage1.py</code><br />
+  reference &nbsp;Sref 193.678 ft&sup2; (half-model 8.997 m&sup2;) &nbsp;·&nbsp; bref 41.532 ft
+  &nbsp;·&nbsp; cref 5.024 ft &nbsp;·&nbsp; moment origin at wing root LE, stage-local frame
+</footer>
+
+</div>

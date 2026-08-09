@@ -1,0 +1,98 @@
+//==== Wing v6 + blended winglet — SC(2)-0412 (2026-08-04) ====//
+// Winglet sizing rationale (Whitcomb 1976 / Maughmer design practice):
+//  - height ~ 10% of semispan: blend 1.0 ft at 40 deg + main panel 1.7 ft at
+//    75 deg cant -> height ~ 2.28 ft = 11% of semispan (b/2 = 20.77 ft).
+//  - LE-ish sweep ~ 32 deg (> wing 13.8 deg): delays winglet compressibility,
+//    moves winglet load aft/outboard, standard practice.
+//  - taper: winglet root = wing tip chord (2.418), winglet tip 0.95 ft
+//    (overall winglet taper ~0.4).
+//  - toe-out ~2 deg (tip twist -5 vs wing tip -3): unloads the winglet at
+//    high CL so it stalls after the wing; also reduces winglet-root
+//    interference load peak.
+//  - same airfoil as wing (SC(2)-0412) per design simplification decision.
+// Comparison protocol: identical refs (Sref/bref/cref) as baseline, so the
+// metric is CDi at fixed CL, not the bref-dependent "e" alone.
+
+void main()
+{
+    string wid = AddGeom( "WING", "" );
+    SetGeomName( wid, "MainWing" );
+
+    //==== Main panel (XSec_1) ====//
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 13.8 );
+    SetParmVal( wid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 3.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_1", 30 );
+    SetParmVal( wid, "Tess_W", "Shape", 41 );
+    Update();
+
+    //==== Winglet (XSec_2): single panel, 70 deg cant ====//
+    // Height = 2.4*sin(70) = 2.26 ft = 10.9% of semispan. A production
+    // winglet would use a smooth blend arc at the junction; at VLM fidelity
+    // a single panel is equivalent (the blend matters for transonic
+    // interference/junction flow, i.e. later CFD, not induced drag).
+    InsertXSec( wid, 1, XS_FILE_AIRFOIL );
+    SetDriverGroup( wid, 2, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_2", 2.40 );
+    SetParmVal( wid, "Sweep", "XSec_2", 31.0 );
+    SetParmVal( wid, "Sweep_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_2", 70.0 );
+    SetParmVal( wid, "Twist", "XSec_2", -5.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_2", 14 );
+    Update();
+
+    //==== Fix-up: InsertXSec reset the shared boundary chord to 1.0 ====//
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_2", 0.95 );
+    Update();
+
+    //==== Airfoil: SC(2)-0412 on all four XSecs ====//
+    string af_file = "../../../airfoils/dat_clean/sc20412_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    for ( int i = 0; i <= 2; i++ )
+    {
+        ChangeXSecShape( xsec_surf, i, XS_FILE_AIRFOIL );
+        ReadFileAirfoil( GetXSec( xsec_surf, i ), af_file );
+    }
+    Update();
+
+    Print( "TotalArea: " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan: " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+
+    WriteVSPFile( "wing_v6_winglet.vsp3", SET_ALL );
+
+    string cg = "VSPAEROComputeGeometry";
+    SetAnalysisInputDefaults( cg );
+    ExecAnalysis( cg );
+
+    string an = "VSPAEROSweep";
+    SetAnalysisInputDefaults( an );
+    array<double> sref = { 193.678 };   SetDoubleAnalysisInput( an, "Sref", sref );
+    array<double> bref = { 41.5324 };   SetDoubleAnalysisInput( an, "bref", bref );
+    array<double> cref = { 5.0236 };    SetDoubleAnalysisInput( an, "cref", cref );
+    array<double> xcg  = { 3.868 };     SetDoubleAnalysisInput( an, "Xcg", xcg );
+    array<double> a0   = { -2.0 };      SetDoubleAnalysisInput( an, "AlphaStart", a0 );
+    array<double> a1   = { 10.0 };      SetDoubleAnalysisInput( an, "AlphaEnd", a1 );
+    array<int>    na   = { 7 };         SetIntAnalysisInput( an, "AlphaNpts", na );
+    array<double> m0   = { 0.30 };      SetDoubleAnalysisInput( an, "MachStart", m0 );
+    array<int>    nm   = { 1 };         SetIntAnalysisInput( an, "MachNpts", nm );
+    array<double> re   = { 8000000.0 }; SetDoubleAnalysisInput( an, "ReCref", re );
+    array<int>    ncpu = { 6 };         SetIntAnalysisInput( an, "NCPU", ncpu );
+    array<int>    wni  = { 5 };         SetIntAnalysisInput( an, "WakeNumIter", wni );
+    ExecAnalysis( an );
+    Print( "DONE winglet run" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

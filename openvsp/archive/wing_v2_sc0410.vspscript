@@ -1,0 +1,94 @@
+//==== Wing v2 — NASA SC(2)-0410, transonic-corrected sweep ====//
+// S = 193.7 ft^2 (config.md B.2, GROUNDED formula pass)
+// AR = 8.9 (config.md B.1, ASSUMPTION -- HondaJet/Phenom average)
+// b (full span) = sqrt(AR*S) = 41.5323 ft -- unaffected by taper choice
+//
+// SWEEP = 19.9 deg  -- NOT the 0 deg in config.md B.1/B.5/wing_v1.
+//   wing_v1 used the Korn-equation-on-incompressible-NeuralFoil result (B.5,
+//   2026-08-02), which found M_dd=0.826 at 0 deg sweep (margin +0.026 over M0.80).
+//   airfoils/evaluate_transonic.py (2026-08-03) reran this with a real, if
+//   approximate, compressibility correction (aerosandbox's
+//   get_aero_from_neuralfoil(mach=...): Prandtl-Glauert + Laitone/Korn M_crit +
+//   empirical wave-drag term) and got the OPPOSITE answer: unswept M_dd=0.752 at
+//   Re=7.5e6 (FL410, this project's current canonical cruise Re -- see
+//   doubts.md #2), i.e. this section needs sweep = arccos(0.752/0.80) = 19.9 deg
+//   to actually reach M_dd=0.80. See airfoils/results_transonic_screen.json.
+//   NOTE: this result is Re-sensitive -- the same script gives 29.5 deg at
+//   Re=15e6 -- and even at 19.9 deg sweep, cruise L/D at this Cl collapses to
+//   9.73 (vs NACA 64-209's 48.66 unswept, same transonic method). This
+//   contradiction between B.1/B.5 and the newer screen is NOT YET reconciled
+//   in config.md/doubts.md -- flagged as a new open item. Building this
+//   variant anyway per explicit instruction to model both candidates side by
+//   side; do not treat this as a resolved pick.
+//
+// TAPER = 0.30 (down from B.1's 0.35 placeholder) -- ASSUMPTION, not a Step-14
+//   elliptical-lift-distribution optimization (doubts.md #6 is still open).
+//   Directional adjustment only: classic swept-wing theory (DeYoung/Harper-type
+//   result) says optimum taper for near-elliptical spanwise loading DECREASES
+//   as sweep increases, because sweep alone shifts loading outboard and a
+//   smaller tip chord counteracts that. 0.30 is a qualitative nudge in that
+//   direction, not a computed optimum -- treat as PLACEHOLDER-grade until
+//   Step 14 is actually run.
+//
+// WASHOUT = -3.0 deg (tip incidence relative to root) -- ASSUMPTION.
+//   Swept wings carry more outboard/tip loading than unswept wings at the same
+//   taper, raising tip-stall risk, so they conventionally carry more washout.
+//   -3 deg sits in the ordinary business/regional-jet range (roughly -2 to -4
+//   deg per Raymer-type guidance) but is NOT derived from this airframe's own
+//   spanwise lift distribution -- same Step-14 caveat as taper above.
+//
+// DIHEDRAL = 5 deg -- unchanged from config.md B.1 PLACEHOLDER (Raymer Table
+//   4.2 midpoint for low-wing subsonic swept). Not touched by this pass;
+//   only sweep/taper/washout were re-derived here.
+//
+// Airfoil: NASA SC(2)-0410 (t/c=9.97%), file-based from
+//   airfoils/dat_clean/sc20410_selig.dat (clean single-loop Selig coords,
+//   Lednicer header already stripped -- see evaluate_transonic.py).
+//
+// OpenVSP has no units; all lengths are raw ft-valued numbers so reported
+// Area/Span come out numerically equal to the config.md values in ft^2/ft.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    //==== Drive the single section directly off span + root/tip chord ====//
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 7.1755 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.1527 );
+    SetParmVal( wid, "Sweep", "XSec_1", 19.9 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 5.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    Update();
+
+    //==== Airfoil: NASA SC(2)-0410, file-based, root + tip ====//
+    string af_file = "../airfoils/dat_clean/sc20410_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    string xsec0 = GetXSec( xsec_surf, 0 );
+    string xsec1 = GetXSec( xsec_surf, 1 );
+    ReadFileAirfoil( xsec0, af_file );
+    ReadFileAirfoil( xsec1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "=== SC(2)-0410 variant (19.9 deg sweep) ===" );
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+    Print( "TotalChord/MAC: " + GetParmVal( wid, "TotalChord", "WingGeom" ) );
+
+    string fname = "wing_v2_sc0410.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

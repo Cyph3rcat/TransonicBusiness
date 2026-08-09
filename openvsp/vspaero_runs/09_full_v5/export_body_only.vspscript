@@ -1,0 +1,16 @@
+void main()
+{
+    ReadVSPFile( "full_v5.vsp3" );
+    array<string> @ids = FindGeoms();
+    for ( uint i = 0; i < ids.length(); i++ )
+    {
+        string nm = GetGeomName( ids[i] );
+        if ( nm != "Fuselage" && nm != "BellyFairing" )
+        {
+            DeleteGeom( ids[i] );
+        }
+    }
+    Update();
+    ExportFile( "body_only.obj", SET_ALL, EXPORT_OBJ );
+    Print( "wrote body_only.obj" );
+}

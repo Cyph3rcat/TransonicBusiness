@@ -1,0 +1,108 @@
+{
+  "Re_primary": 7500000.0,
+  "Re_alternate": 15000000.0,
+  "mach": 0.8,
+  "cl_target": 0.248,
+  "cases": {
+    "Re=7.5e6 (FL410, recomputed MAC)": {
+      "NASA SC(2)-0410": {
+        "t/c (%)": 9.97,
+        "alpha @ Cl_target (deg)": -0.022,
+        "Cd @ Cl_target (counts)": 254.9,
+        "Cm @ Cl_target": -0.1338,
+        "L/D @ Cl_target": 9.73,
+        "Cd_min (counts)": 65.7,
+        "Cl @ Cd_min": 0.197,
+        "mach_crit (unswept)": 0.684,
+        "mach_dd (unswept)": 0.752,
+        "sweep for M_dd=0.80 (deg)": 19.9
+      },
+      "NACA 64-209": {
+        "t/c (%)": 8.98,
+        "alpha @ Cl_target (deg)": -0.105,
+        "Cd @ Cl_target (counts)": 51.0,
+        "Cm @ Cl_target": -0.0695,
+        "L/D @ Cl_target": 48.66,
+        "Cd_min (counts)": 44.4,
+        "Cl @ Cd_min": 0.148,
+        "mach_crit (unswept)": 0.735,
+        "mach_dd (unswept)": 0.803,
+        "sweep for M_dd=0.80 (deg)": 0.0
+      },
+      "NASA SC(2)-0610": {
+        "t/c (%)": 9.98,
+        "alpha @ Cl_target (deg)": -2.203,
+        "Cd @ Cl_target (counts)": 93.0,
+        "Cm @ Cl_target": -0.1641,
+        "L/D @ Cl_target": 26.67,
+        "Cd_min (counts)": 65.2,
+        "Cl @ Cd_min": 0.308,
+        "mach_crit (unswept)": 0.719,
+        "mach_dd (unswept)": 0.786,
+        "sweep for M_dd=0.80 (deg)": 10.6
+      },
+      "Custom CST 9% (SC(2)-0410-derived)": {
+        "t/c (%)": 9.0,
+        "alpha @ Cl_target (deg)": 0.732,
+        "Cd @ Cl_target (counts)": 560.6,
+        "Cm @ Cl_target": -0.1496,
+        "L/D @ Cl_target": 4.42,
+        "Cd_min (counts)": 58.9,
+        "Cl @ Cd_min": 0.179,
+        "mach_crit (unswept)": 0.626,
+        "mach_dd (unswept)": 0.694,
+        "sweep for M_dd=0.80 (deg)": 29.9
+      }
+    },
+    "Re=15e6 (as originally requested)": {
+      "NASA SC(2)-0410": {
+        "t/c (%)": 9.97,
+        "alpha @ Cl_target (deg)": 0.679,
+        "Cd @ Cl_target (counts)": 578.3,
+        "Cm @ Cl_target": -0.1602,
+        "L/D @ Cl_target": 4.29,
+        "Cd_min (counts)": 67.0,
+        "Cl @ Cd_min": 0.189,
+        "mach_crit (unswept)": 0.628,
+        "mach_dd (unswept)": 0.696,
+        "sweep for M_dd=0.80 (deg)": 29.5
+      },
+      "NACA 64-209": {
+        "t/c (%)": 8.98,
+        "alpha @ Cl_target (deg)": -0.077,
+        "Cd @ Cl_target (counts)": 61.4,
+        "Cm @ Cl_target": -0.0713,
+        "L/D @ Cl_target": 40.36,
+        "Cd_min (counts)": 48.9,
+        "Cl @ Cd_min": 0.139,
+        "mach_crit (unswept)": 0.729,
+        "mach_dd (unswept)": 0.797,
+        "sweep for M_dd=0.80 (deg)": 5.3
+      },
+      "NASA SC(2)-0610": {
+        "t/c (%)": 9.98,
+        "alpha @ Cl_target (deg)": -2.177,
+        "Cd @ Cl_target (counts)": 86.3,
+        "Cm @ Cl_target": -0.1597,
+        "L/D @ Cl_target": 28.73,
+        "Cd_min (counts)": 68.2,
+        "Cl @ Cd_min": 0.309,
+        "mach_crit (unswept)": 0.726,
+        "mach_dd (unswept)": 0.794,
+        "sweep for M_dd=0.80 (deg)": 7.1
+      },
+      "Custom CST 9% (SC(2)-0410-derived)": {
+        "t/c (%)": 9.0,
+        "alpha @ Cl_target (deg)": 0.878,
+        "Cd @ Cl_target (counts)": 620.9,
+        "Cm @ Cl_target": -0.155,
+        "L/D @ Cl_target": 3.99,
+        "Cd_min (counts)": 61.9,
+        "Cl @ Cd_min": 0.172,
+        "mach_crit (unswept)": 0.613,
+        "mach_dd (unswept)": 0.681,
+        "sweep for M_dd=0.80 (deg)": 31.7
+      }
+    }
+  }
+}

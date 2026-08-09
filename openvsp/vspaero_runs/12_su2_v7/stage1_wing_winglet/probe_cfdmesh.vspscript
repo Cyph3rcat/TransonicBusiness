@@ -1,0 +1,6 @@
+void main()
+{
+    string analysis_name = "CfdMeshAnalysis";
+    SetAnalysisInputDefaults( analysis_name );
+    PrintAnalysisInputs( analysis_name );
+}

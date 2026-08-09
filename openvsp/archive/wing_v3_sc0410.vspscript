@@ -1,0 +1,85 @@
+//==== Wing v3 — NASA SC(2)-0410, sweep locked via SU2 RANS CFD (2026-08-04) ====//
+// Supersedes wing_v2_sc0410.vspscript (archived), which used the since-superseded
+// aerosandbox transonic-corrected NeuralFoil screen's 19.9 deg sweep figure.
+// See config.md B.5/B.5.1 and doubts.md #7/#8/#12 for the full resolution history,
+// and airfoils/su2_screen/ for the CFD that settled it.
+//
+// S = 193.7 ft^2 (config.md B.2, GROUNDED formula pass)
+// AR = 8.9 (config.md B.1, ASSUMPTION -- HondaJet/Phenom average)
+// b (full span) = sqrt(AR*S) = 41.5323 ft
+//
+// SWEEP = 0 deg -- GROUNDED (SU2 RANS, M0.80, Re=7.3e6, SST): unswept SC(2)-0410
+//   beats unswept NACA 64-209 by ~35% lower drag / ~2x L/D at comparable Cl.
+//   Matches B.5's original hand Korn-equation result (M_dd=0.826 at 0 deg,
+//   margin +0.026 over M0.80), not the aerosandbox-screen's 19.9 deg figure
+//   (which real CFD did not confirm -- see doubts.md #12).
+//
+// TAPER = 0.35 -- reverted to B.1's original PLACEHOLDER. wing_v2's 0.30 was a
+//   swept-wing-specific nudge (less taper as sweep increases, DeYoung/Harper-type
+//   argument) that no longer applies now that sweep = 0. Still NOT independently
+//   optimized -- doubts.md #6 (taper half) is still open.
+//
+// TWIST (washout) = -1.1 deg (tip relative to root, linear) -- GROUNDED
+//   (Schrenk's approximation, Sadraey Step 14, computed 2026-08-04). Compares
+//   actual untwisted vs. ideal-elliptical local Cl at the tip: c_lin(tip)=2.42 ft,
+//   c_ell(tip)->0, so Cl_actual(tip)=0.5*CL_wing vs Cl_ideal(tip)=0; dCl=-0.124
+//   at CL_wing=0.248; da=dCl/a0 with a0=2pi/rad -> -1.13 deg. Small because
+//   taper=0.35 is already close to the taper that naturally approximates
+//   elliptical loading on an unswept wing -- see doubts.md #6/config.md B.1.
+//
+// DIHEDRAL = 6 deg -- corrected 2026-08-04 (was 5 deg). Raymer Table 4.2
+//   midpoint for low-wing subsonic UNSWEPT (~5-7 deg), not swept (3-7 deg,
+//   lower because sweep contributes free effective dihedral) -- the old 5 deg
+//   used the wrong category since sweep is now locked at 0. Still a
+//   design-guideline range, not a derived Cl-beta target.
+//
+// Airfoil: NASA SC(2)-0410 (t/c=9.97%), file-based from
+//   airfoils/dat_clean/sc20410_selig.dat.
+//
+// OpenVSP has no units; all lengths are raw ft-valued numbers so reported
+// Area/Span come out numerically equal to the config.md values in ft^2/ft.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    //==== Drive the single section directly off span + root/tip chord ====//
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 0.0 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 6.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -1.1 );
+    Update();
+
+    //==== Airfoil: NASA SC(2)-0410, file-based, root + tip ====//
+    string af_file = "../airfoils/dat_clean/sc20410_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    string xsec0 = GetXSec( xsec_surf, 0 );
+    string xsec1 = GetXSec( xsec_surf, 1 );
+    ReadFileAirfoil( xsec0, af_file );
+    ReadFileAirfoil( xsec1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "=== SC(2)-0410, locked geometry (0 deg sweep, SU2-verified) ===" );
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+    Print( "TotalChord/MAC (target ~5.02): " + GetParmVal( wid, "TotalChord", "WingGeom" ) );
+
+    string fname = "wing_v3_sc0410.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

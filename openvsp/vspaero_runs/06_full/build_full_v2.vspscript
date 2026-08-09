@@ -1,0 +1,211 @@
+﻿//==== Full aircraft v1 (2026-08-04) ====//
+// Phenom-300E-like proportions, HondaJet-II-like OTWEM + sizing.
+// Components:
+//  - Fuselage: per fuselage/fuselage.md sect 12 (L=42.2, d=6.1, ellipsoid nose,
+//    14-deg upsweep tail cone).
+//  - MainWing: v6 planform + winglet (SC(2)-0412, Lambda25=13.8 at c/4,
+//    dihedral 3, washout -3, winglet 2.4 ft at 70 deg cant, toe-out 2 deg).
+//    Wing root LE at x=19.0 ft, z=-2.6 (low wing). Quarter-MAC at x=22.87.
+//  - Nacelles: FJ44-3A-24 class (engine 62.4 in long / 31.1 in high, EASA
+//    TCDS IM.E.016): nacelle 7.0 ft long, max dia 2.5 ft, solid body (no
+//    through-flow at this fidelity). OTWEM placement y=6.9 ft (33% semispan,
+//    HondaJet-like), inlet at ~75% local chord above wing TE region,
+//    centerline z=-0.2.
+//  - Pylons: thin vertical struts wing-upper-surface -> nacelle bottom.
+//  - T-tail: VT S=39.7 ft2 (h 6.5, cr 7.6, ct 4.6, sweep 35): c_VT=0.062
+//    before T-tail end-plate credit (target 0.07-equivalent).
+//    HT S=51.7 ft2 (b 15.2, cr 4.6, ct 2.2, sweep 20): c_HT=0.85 with
+//    l_HT=16.1 ft (0.90 jet-class minus 5% T-tail clean-air credit).
+// Sets: set 3 "thick" = fuselage+nacelles (panel), set 4 "thin" = wing,
+// tails, pylons (VLM camber surfaces).
+
+void main()
+{
+    //---------------- Fuselage ----------------//
+    string fid = AddGeom( "FUSELAGE", "" );
+    SetGeomName( fid, "Fuselage" );
+    SetParmVal( fid, "Length", "Design", 42.2 );
+    Update();
+    // v2 (area-ruled): extra stations pin the cabin barrel (killing the
+    // accidental spline sag v1 had at x=16-20), then a deliberate waist
+    // under the wing+nacelle area peak (x~20-29, max -1.1 ft dia at x=26,
+    // aft of the 23.4-ft cabin end so pax shoulder room is untouched except
+    // the last ~0.4 ft of cabin; see doubts.md #10).
+    string fsurf = GetXSecSurf( fid, 0 );
+    for ( int k = 0; k < 10; k++ ) { InsertXSec( fid, 1, XS_ELLIPSE ); }
+    Update();
+    for ( int i = 1; i <= 13; i++ ) { ChangeXSecShape( fsurf, i, XS_ELLIPSE ); }
+    Update();
+    array<double> xloc = { 0.0, 1.0, 2.5, 5.0, 7.5, 10.4, 14.0, 17.0, 20.0, 23.0, 26.0, 29.0, 33.0, 38.0, 42.2 };
+    array<double> dia  = { 0.0, 1.50, 2.59, 3.93, 5.01, 6.10, 6.10, 6.10, 5.85, 5.50, 5.00, 5.00, 3.90, 2.50, 0.0 };
+    array<double> zloc = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.55, 1.00, 1.75, 2.40 };
+    // XLocPercent is limit-clamped against neighbor sections' CURRENT
+    // positions, so a single pass silently loses most assignments (found
+    // via debug_fuse.vspscript on v2 first build). Run the position loop
+    // three times with Update() between passes so the clamps converge.
+    for ( int pass = 0; pass < 4; pass++ )
+    {
+        for ( int k = 0; k <= 14; k++ )
+        {
+            int i = k;
+            if ( pass % 2 == 0 ) { i = 14 - k; }  // descending on even passes
+            string grp = "XSec_" + i;
+            SetParmVal( fid, "XLocPercent", grp, xloc[i] / 42.2 );
+            SetParmVal( fid, "ZLocPercent", grp, zloc[i] / 42.2 );
+            Update();
+        }
+    }
+    for ( int i = 1; i <= 13; i++ )
+    {
+        SetParmVal( fid, "Ellipse_Width", "XSecCurve_" + i, dia[i] );
+        SetParmVal( fid, "Ellipse_Height", "XSecCurve_" + i, dia[i] );
+    }
+    SetParmVal( fid, "Tess_U", "Shape", 33 );
+    SetParmVal( fid, "Tess_W", "Shape", 24 );
+    Update();
+
+    //---------------- Main wing + winglet ----------------//
+    string wid = AddGeom( "WING", "" );
+    SetGeomName( wid, "MainWing" );
+    SetParmVal( wid, "X_Rel_Location", "XForm", 19.0 );
+    SetParmVal( wid, "Z_Rel_Location", "XForm", -2.6 );
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 13.8 );
+    SetParmVal( wid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 3.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_1", 30 );
+    SetParmVal( wid, "Tess_W", "Shape", 41 );
+    Update();
+    InsertXSec( wid, 1, XS_FILE_AIRFOIL );
+    SetDriverGroup( wid, 2, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_2", 2.40 );
+    SetParmVal( wid, "Sweep", "XSec_2", 31.0 );
+    SetParmVal( wid, "Sweep_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_2", 70.0 );
+    SetParmVal( wid, "Twist", "XSec_2", -5.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_2", 14 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_2", 0.95 );
+    Update();
+    string af_file = "../../../airfoils/dat_clean/sc20412_selig.dat";
+    string wsurf = GetXSecSurf( wid, 0 );
+    for ( int i = 0; i <= 2; i++ )
+    {
+        ChangeXSecShape( wsurf, i, XS_FILE_AIRFOIL );
+        ReadFileAirfoil( GetXSec( wsurf, i ), af_file );
+    }
+    Update();
+    Print( "Wing TotalArea (expect ~203): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+
+    //---------------- Nacelles (solid, symmetric pair) ----------------//
+    string nid = AddGeom( "FUSELAGE", "" );
+    SetGeomName( nid, "Nacelle" );
+    SetParmVal( nid, "Length", "Design", 7.0 );
+    SetParmVal( nid, "X_Rel_Location", "XForm", 25.1 );
+    SetParmVal( nid, "Y_Rel_Location", "XForm", 6.9 );
+    SetParmVal( nid, "Z_Rel_Location", "XForm", -0.2 );
+    SetParmVal( nid, "Sym_Planar_Flag", "Sym", SYM_XZ );
+    Update();
+    string nsurf = GetXSecSurf( nid, 0 );
+    // default 5 stations: point, 3 mid, point. Convert mids to ellipse FIRST
+    // and Update() so the Ellipse_* parms exist before setting them.
+    for ( int i = 1; i <= 3; i++ ) { ChangeXSecShape( nsurf, i, XS_ELLIPSE ); }
+    Update();
+    array<double> nx = { 0.0, 0.6, 2.6, 5.2, 7.0 };
+    array<double> nd = { 0.0, 1.8, 2.5, 2.2, 0.0 };
+    for ( int i = 0; i <= 4; i++ )
+    {
+        string grp = "XSec_" + i;
+        SetParmVal( nid, "XLocPercent", grp, nx[i] / 7.0 );
+        if ( i >= 1 && i <= 3 )
+        {
+            SetParmVal( nid, "Ellipse_Width", "XSecCurve_" + i, nd[i] );
+            SetParmVal( nid, "Ellipse_Height", "XSecCurve_" + i, nd[i] );
+        }
+    }
+    SetParmVal( nid, "Tess_U", "Shape", 17 );
+    SetParmVal( nid, "Tess_W", "Shape", 17 );
+    Update();
+
+    //---------------- Pylons (thin vertical struts) ----------------//
+    string pid = AddGeom( "WING", "" );
+    SetGeomName( pid, "Pylon" );
+    SetParmVal( pid, "X_Rel_Location", "XForm", 26.2 );
+    SetParmVal( pid, "Y_Rel_Location", "XForm", 6.9 );
+    SetParmVal( pid, "Z_Rel_Location", "XForm", -2.05 );
+    SetParmVal( pid, "X_Rel_Rotation", "XForm", 90.0 );  // span dir +Y -> +Z (up)
+    SetParmVal( pid, "Sym_Planar_Flag", "Sym", SYM_XZ );
+    SetDriverGroup( pid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( pid, "Span", "XSec_1", 1.9 );
+    SetParmVal( pid, "Root_Chord", "XSec_1", 3.2 );
+    SetParmVal( pid, "Tip_Chord", "XSec_1", 3.2 );
+    SetParmVal( pid, "Sweep", "XSec_1", 0.0 );
+    SetParmVal( pid, "Dihedral", "XSec_1", 0.0 );
+    SetParmVal( pid, "Twist", "XSec_1", 0.0 );
+    SetParmVal( pid, "SectTess_U", "XSec_1", 6 );
+    Update();
+
+    //---------------- Vertical tail ----------------//
+    string vid = AddGeom( "WING", "" );
+    SetGeomName( vid, "VertTail" );
+    SetParmVal( vid, "X_Rel_Location", "XForm", 31.6 );
+    SetParmVal( vid, "Z_Rel_Location", "XForm", 2.0 );
+    SetParmVal( vid, "X_Rel_Rotation", "XForm", 90.0 );  // fin up
+    SetParmVal( vid, "Sym_Planar_Flag", "Sym", 0 );       // single fin
+    SetDriverGroup( vid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( vid, "Span", "XSec_1", 6.5 );
+    SetParmVal( vid, "Root_Chord", "XSec_1", 7.6 );
+    SetParmVal( vid, "Tip_Chord", "XSec_1", 4.6 );
+    SetParmVal( vid, "Sweep", "XSec_1", 35.0 );
+    SetParmVal( vid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( vid, "Dihedral", "XSec_1", 0.0 );
+    SetParmVal( vid, "Twist", "XSec_1", 0.0 );
+    SetParmVal( vid, "SectTess_U", "XSec_1", 12 );
+    Update();
+
+    //---------------- Horizontal tail (T-tail, on VT tip) ----------------//
+    string hid = AddGeom( "WING", "" );
+    SetGeomName( hid, "HorizTail" );
+    SetParmVal( hid, "X_Rel_Location", "XForm", 36.8 );
+    SetParmVal( hid, "Z_Rel_Location", "XForm", 8.5 );
+    SetDriverGroup( hid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( hid, "Span", "XSec_1", 7.6 );
+    SetParmVal( hid, "Root_Chord", "XSec_1", 4.6 );
+    SetParmVal( hid, "Tip_Chord", "XSec_1", 2.2 );
+    SetParmVal( hid, "Sweep", "XSec_1", 20.0 );
+    SetParmVal( hid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( hid, "Dihedral", "XSec_1", 0.0 );
+    SetParmVal( hid, "Twist", "XSec_1", 0.0 );
+    SetParmVal( hid, "SectTess_U", "XSec_1", 16 );
+    Update();
+
+    //---------------- Sets: 3 = thick bodies, 4 = thin lifting ----------------//
+    SetSetName( 3, "ThickBodies" );
+    SetSetName( 4, "ThinLifting" );
+    SetSetFlag( fid, 3, true );
+    SetSetFlag( nid, 3, true );
+    SetSetFlag( wid, 4, true );
+    SetSetFlag( pid, 4, true );
+    SetSetFlag( vid, 4, true );
+    SetSetFlag( hid, 4, true );
+    Update();
+
+    WriteVSPFile( "full_v2.vsp3", SET_ALL );
+    Print( "Wrote full_v2.vsp3" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}
+
+

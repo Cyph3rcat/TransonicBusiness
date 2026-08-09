@@ -1,0 +1,18 @@
+// Export ONLY Fuselage + BellyFairing so the body loft can be judged without
+// the wing / nacelle / pylon geometry sitting on top of it.
+void main()
+{
+    ReadVSPFile( "full_v4.vsp3" );
+    Update();
+    SetSetName( 5, "BodyOnly" );
+    array<string> gids = FindGeoms();
+    for ( uint i = 0; i < gids.length(); i++ )
+    {
+        string nm = GetGeomName( gids[i] );
+        if ( nm == "Fuselage" || nm == "BellyFairing" ) { SetSetFlag( gids[i], 5, true ); }
+    }
+    Update();
+    ExportFile( "body_only.obj", 5, EXPORT_OBJ );
+    Print( "wrote body_only.obj" );
+    while ( GetNumTotalErrors() > 0 ) { ErrorObj e = PopLastError(); Print( e.GetErrorString() ); }
+}

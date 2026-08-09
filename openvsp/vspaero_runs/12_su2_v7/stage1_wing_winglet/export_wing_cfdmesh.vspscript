@@ -1,0 +1,141 @@
+// Stage 1 SU2 surface export, attempt 2: use OpenVSP's own CFD Mesh tool
+// instead of raw STEP + manual OCC solid repair (that path failed -- the
+// STEP export came in as an open, un-sewable shell; see make_mesh.py
+// history). CfdMeshAnalysis is purpose-built for this exact handoff: it
+// produces a watertight, half-model, symmetry-capped triangulation ready
+// for a volume mesher, which is what "Analysis -> CFD Mesh" in
+// cfdinstructions.md item 4 actually meant.
+void main()
+{
+    string wid = AddGeom( "WING", "" );
+    SetGeomName( wid, "MainWing" );
+    SetParmVal( wid, "Sym_Planar_Flag", "Sym", 0 );  // single semispan
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 18.5 );
+    SetParmVal( wid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 2.3 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_1", 45 );
+    // User's GUI experiment on wing_winglet.vsp3 (2026-08-08): more spanwise
+    // stations on the root panel (30->45), clustered toward the root end
+    // (InCluster 1.0->1.457) -- ported back into the script per the
+    // project's "GUI edits belong in the build script" convention
+    // (doubts.md #26 pattern). Testing whether this clears the root/LE
+    // crack that's been blocking the fine mesh.
+    SetParmVal( wid, "InCluster", "XSec_1", 1.457 );
+    // Tess_W (61, tried 2026-08-08) turned out to do nothing here -- it
+    // only drives the simplified "degenerate" surface used by VSPAERO and
+    // rendering, not the real CAD surface the CFD Mesh tool triangulates.
+    // Reverted.
+    SetParmVal( wid, "Tess_W", "Shape", 41 );
+    Update();
+    InsertXSec( wid, 1, XS_FILE_AIRFOIL );
+    SetDriverGroup( wid, 2, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_2", 2.40 );
+    SetParmVal( wid, "Sweep", "XSec_2", 31.0 );
+    SetParmVal( wid, "Sweep_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_2", 70.0 );
+    SetParmVal( wid, "Twist", "XSec_2", -5.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_2", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_2", 14 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    Update();
+    SetParmVal( wid, "Tip_Chord", "XSec_2", 0.95 );
+    Update();
+    // Clean TE truncation (x/c=0.95, ~0.87% chord gap), same mesh-only copy
+    // used by export_wing.vspscript -- avoids degenerate zero-area TE-cap
+    // slivers at the small winglet-tip chord.
+    string af_file = "sc20412_blunt_te.dat";
+    string wsurf = GetXSecSurf( wid, 0 );
+    for ( int i = 0; i <= 2; i++ )
+    {
+        ChangeXSecShape( wsurf, i, XS_FILE_AIRFOIL );
+        ReadFileAirfoil( GetXSec( wsurf, i ), af_file );
+    }
+    Update();
+    Print( "Wing+winglet semispan area (expect ~100.88): " +
+           GetParmVal( wid, "TotalArea", "WingGeom" ) );
+
+    // ---- local refinement right along the root rim (line source) -------
+    // The crack that's been blocking the fine mesh sits exactly on the
+    // root cross-section, all the way around it (u=0 = root, w sweeps 0->1
+    // around the airfoil perimeter). SectTess_U/InCluster (spanwise density)
+    // and Tess_W (chordwise display tessellation) both turned out not to
+    // touch this -- try forcing extra CFD-mesh-native resolution directly
+    // on that exact curve instead, via a line source running its whole
+    // perimeter.
+    // Tried a line source along the root rim (2026-08-08) to force local
+    // refinement right where the crack lives. Both a tight version
+    // (l1=0.008, r1=0.25) and a gentler one (l1=0.02, r1=0.6) sent gmsh's
+    // curvature-adaptive remesher into a stuck retry loop ("Triangle not
+    // found for curvatures", repeating indefinitely) and left ~99,000
+    // invalid elements -- much worse than the original ~15-edge crack.
+    // Abandoned; not just ineffective, actively harmful on this geometry.
+
+    // ---- far-field domain (old low-level API; not exposed on the newer
+    // CfdMeshAnalysis wrapper, but both write into the same CFDMeshMgr
+    // singleton so this still applies when ExecAnalysis runs below). Sized
+    // >= 20 chords / 6 semispans per make_mesh.py's original farfield-radius
+    // rule (cref=5.0236 ft, semispan=23.166 ft -> ~140 ft was the target).
+    SetCFDMeshVal( CFD_FAR_FIELD_FLAG, 1 );
+    SetCFDMeshVal( CFD_HALF_MESH_FLAG, 1 );
+    SetCFDMeshVal( CFD_FAR_SIZE_ABS_FLAG, 1 );
+    SetCFDMeshVal( CFD_FAR_LENGTH, 300.0 );
+    SetCFDMeshVal( CFD_FAR_WIDTH, 300.0 );
+    SetCFDMeshVal( CFD_FAR_HEIGHT, 300.0 );
+    SetCFDMeshVal( CFD_FAR_MAX_EDGE_LEN, 15.0 );
+    SetCFDMeshVal( CFD_FAR_MAX_GAP, 1.0 );
+    SetCFDMeshVal( CFD_FAR_NUM_CIRCLE_SEGS, 20.0 );
+
+    string an = "CfdMeshAnalysis";
+    SetAnalysisInputDefaults( an );
+    array<int> sidx = { 0 };  SetIntAnalysisInput( an, "SelectedSetIndex", sidx );  // Set 0 = default/all shown
+    array<int> half = { 1 };  SetIntAnalysisInput( an, "GenerateHalfMesh", half );
+    // Tightened for the fine pass (2026-08-08): the coarse pass had OpenVSP
+    // hand gmsh a loose base skin (BaseLen 0.30 ft) and asked gmsh to
+    // aggressively re-triangulate it down to 0.05 ft during classification
+    // -- that big a stretch is what produced a tiny overlapping-triangle
+    // crash last time. Having OpenVSP itself produce a skin close to the
+    // target resolution means gmsh only has to lightly touch it up, not
+    // rebuild most of it.
+    // Tightened again 2026-08-08, AFTER the root-cap root cause was found and
+    // fixed (see make_mesh_euler3.py). Every previous attempt to tighten these
+    // died on an overlapping-facet pair on the y=0 root cap; that cap is now
+    // stripped and rebuilt as a flat plane downstream, so MinLen is finally
+    // free to drive real leading-edge resolution instead of being pinned by a
+    // meshing failure. Measured: LE edge length tracked MinLen almost exactly
+    // (0.025 ft -> 0.00795 m median at the nose), so halving MinLen should
+    // roughly halve nose spacing -- the one thing that plausibly moves the
+    // negative-CD-at-low-Mach anomaly.
+    array<double> minlen = { 0.0125 }; SetDoubleAnalysisInput( an, "MinLen", minlen );
+    array<double> baselen = { 0.05 }; SetDoubleAnalysisInput( an, "BaseLen", baselen );
+    array<double> maxgap = { 0.003 }; SetDoubleAnalysisInput( an, "MaxGap", maxgap );
+    array<double> ncirc = { 72.0 };   SetDoubleAnalysisInput( an, "NCircSeg", ncirc );
+    array<double> growth = { 1.25 };  SetDoubleAnalysisInput( an, "GrowthRatio", growth );
+    array<int> stlf = { 1 }; SetIntAnalysisInput( an, "STLFileFlag", stlf );
+    array<int> gmshf = { 1 }; SetIntAnalysisInput( an, "GMSHFileFlag", gmshf );
+    array<int> trif = { 0 }; SetIntAnalysisInput( an, "TRIFileFlag", trif );
+    array<int> objf = { 0 }; SetIntAnalysisInput( an, "OBJFileFlag", objf );
+    array<int> polyf = { 0 }; SetIntAnalysisInput( an, "POLYFileFlag", polyf );
+    array<int> facetf = { 0 }; SetIntAnalysisInput( an, "FACETFileFlag", facetf );
+    array<string> stlname = { "wing_winglet_cfdmesh.stl" };
+    SetStringAnalysisInput( an, "STLFileName", stlname );
+    array<string> gmshname = { "wing_winglet_cfdmesh.msh" };
+    SetStringAnalysisInput( an, "GMSHFileName", gmshname );
+
+    PrintAnalysisInputs( an );
+    Print( "--> running CfdMeshAnalysis" );
+    string resid = ExecAnalysis( an );
+    Print( "CFD MESH EXPORT DONE" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

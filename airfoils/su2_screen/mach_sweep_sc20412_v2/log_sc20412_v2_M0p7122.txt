@@ -1,0 +1,423 @@
+
+-------------------------------------------------------------------------
+|    ___ _   _ ___                                                      |
+|   / __| | | |_  )   Release 8.5.0 "Harrier"                           |
+|   \__ \ |_| |/ /                                                      |
+|   |___/\___//___|   Suite (Computational Fluid Dynamics Code)         |
+|                                                                       |
+-------------------------------------------------------------------------
+| SU2 Project Website: https://su2code.github.io                        |
+|                                                                       |
+| The SU2 Project is maintained by the SU2 Foundation                   |
+| (http://su2foundation.org)                                            |
+-------------------------------------------------------------------------
+| Copyright 2012-2026, SU2 Contributors                                 |
+|                                                                       |
+| SU2 is free software; you can redistribute it and/or                  |
+| modify it under the terms of the GNU Lesser General Public            |
+| License as published by the Free Software Foundation; either          |
+| version 2.1 of the License, or (at your option) any later version.    |
+|                                                                       |
+| SU2 is distributed in the hope that it will be useful,                |
+| but WITHOUT ANY WARRANTY; without even the implied warranty of        |
+| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU      |
+| Lesser General Public License for more details.                       |
+|                                                                       |
+| You should have received a copy of the GNU Lesser General Public      |
+| License along with SU2. If not, see <http://www.gnu.org/licenses/>.   |
+-------------------------------------------------------------------------
+
+Parsing config file for zone 0
+
+----------------- Physical Case Definition ( Zone 0 ) -------------------
+Compressible RANS equations.
+Turbulence model: Menter's k-omega SST-2003m with no production modification
+using default hard coded lower limit clipping.
+Hybrid RANS/LES: No Hybrid RANS/LES
+Mach number: 0.7122.
+Angle of attack (AoA): -0.973 deg, and angle of sideslip (AoS): 0 deg.
+Reynolds number: 6.49882e+06. Reference length 1.
+Reading and writing binary SU2 native restart files.
+Read flow solution from: restart_sc20412_v2_M0p6822.dat.
+Dimensional simulation.
+The reference area is 1 m^2.
+The semi-span will be computed using the max y(3D) value.
+The reference length is 1 m.
+Reference origin for moment evaluation is (0.25, 0, 0).
+Surface(s) where the force coefficients are evaluated: airfoil.
+
+Surface(s) plotted in the output file: airfoil.
+Input mesh file name: sc20412.su2
+
+--------------- Space Numerical Integration ( Zone 0 ) ------------------
+Roe (with entropy fix = 0.1) solver for the flow inviscid terms.
+Standard Roe without low-dissipation function.
+Second order integration in space, with slope limiter.
+Venkatakrishnan slope-limiting method, with constant: 0.05.
+The reference element size is: 1. 
+Scalar upwind solver for the turbulence model.
+First order integration in space.
+Average of gradients with correction (viscous flow terms).
+Average of gradients with correction (viscous turbulence terms).
+Gradient for upwind reconstruction: inverse-distance weighted Least-Squares.
+Gradient for viscous and source terms: inverse-distance weighted Least-Squares.
+
+--------------- Time Numerical Integration  ( Zone 0 ) ------------------
+Local time stepping (steady state simulation).
+Euler implicit method for the flow equations.
+FGMRES is used for solving the linear system.
+Using a LU-SGS preconditioning.
+Convergence criteria of the linear solver: 1e-06.
+Max number of linear iterations: 15.
+CFL adaptation. Factor down: 0.1, factor up: 1.2,
+                lower limit: 1, upper limit: 20,
+                acceptable linear residual: 0.001'
+                starting iteration: 0.
+Courant-Friedrichs-Lewy number:      1.5
+Euler implicit time integration for the turbulence model.
+
+------------------ Convergence Criteria  ( Zone 0 ) ---------------------
+Maximum number of solver subiterations: 4500.
+Begin convergence monitoring at iteration 500.
+Residual minimum value: 1e-3.
+Cauchy series min. value: 5e-07.
+Number of Cauchy elements: 300.
+Begin windowed time average at iteration 0.
+
+-------------------- Output Information ( Zone 0 ) ----------------------
+File writing frequency: 
++------------------------------------+
+|                     File| Frequency|
++------------------------------------+
+|                  RESTART|       500|
+|              SURFACE_CSV|       500|
++------------------------------------+
+Writing the convergence history file every 1 inner iterations.
+Writing the screen convergence history every 50 inner iterations.
+The tabular file format is CSV (.csv).
+Convergence history file name: history_sc20412_v2_M0p7122.
+Forces breakdown file name: forces_breakdown.dat.
+Surface file name: surface_sc20412_v2_M0p7122.
+Volume file name: vol_solution.
+Restart file name: restart_sc20412_v2_M0p7122.dat.
+
+------------- Config File Boundary Information ( Zone 0 ) ---------------
++-----------------------------------------------------------------------+
+|                        Marker Type|                        Marker Name|
++-----------------------------------------------------------------------+
+|                          Far-field|                           farfield|
++-----------------------------------------------------------------------+
+|                     Heat flux wall|                            airfoil|
++-----------------------------------------------------------------------+
+
+-------------------- Output Preprocessing ( Zone 0 ) --------------------
+
+WARNING: SURFACE_PRESSURE_DROP can only be computed for at least 2 surfaces (outlet, inlet, ...)
+
+Screen output fields: INNER_ITER, RMS_DENSITY, RMS_ENERGY, LIFT, DRAG
+History output group(s): ITER, RMS_RES
+Convergence field(s): DRAG
+Warning: No (valid) fields chosen for time convergence monitoring. Time convergence monitoring inactive.
+Volume output fields: COORDINATES, SOLUTION, PRIMITIVE
+
+------------------- Geometry Preprocessing ( Zone 0 ) -------------------
+Two dimensional problem.
+34474 grid points.
+68208 volume elements.
+2 surface markers.
+684 boundary elements in index 0 (Marker = airfoil).
+56 boundary elements in index 1 (Marker = farfield).
+68208 triangles.
+Setting point connectivity.
+Renumbering points (Reverse Cuthill McKee Ordering).
+Recomputing point connectivity.
+Setting element connectivity.
+Checking the numerical grid orientation.
+There has been a re-orientation of 68208 TRIANGLE volume elements.
+There has been a re-orientation of 740 LINE surface elements.
+Identifying edges and vertices.
+Setting the control volume structure.
+Area of the computational grid: 1959.3.
+Searching for the closest normal neighbors to the surfaces.
+Storing a mapping from global to local point index.
+Compute the surface curvature.
+Max K: 531.627. Mean K: 3.20224. Standard deviation K: 26.0558.
+Computing mesh quality statistics for the dual control volumes.
++--------------------------------------------------------------+
+|           Mesh Quality Metric|        Minimum|        Maximum|
++--------------------------------------------------------------+
+|    Orthogonality Angle (deg.)|        26.2411|        74.3213|
+|     CV Face Area Aspect Ratio|        1.00037|        539.891|
+|           CV Sub-Volume Ratio|              1|        15.7982|
++--------------------------------------------------------------+
+Finding max control volume width.
+Wetted area = 2.0472 m.
+Area projection in the x-plane = 0.126595 m, y-plane = 0.999906 m.
+Max. coordinate in the x-direction = 1 m, y-direction = 0.0601074 m.
+Min. coordinate in the x-direction = 2.55137e-05 m, y-direction = -0.0600074 m.
+Computing wall distances.
+
+-------------------- Solver Preprocessing ( Zone 0 ) --------------------
+Viscous flow: Computing pressure using the ideal gas law
+based on the free-stream temperature and a density computed
+from the Reynolds number.
+Force coefficients computed using free-stream values.
+
+-- Models:
++------------------------------------------------------------------------------+
+|          Viscosity Model|        Conductivity Model|              Fluid Model|
++------------------------------------------------------------------------------+
+|               SUTHERLAND|          CONSTANT_PRANDTL|             STANDARD_AIR|
++------------------------------------------------------------------------------+
+-- Fluid properties:
++------------------------------------------------------------------------------+
+|                  Name|    Dim. value|    Ref. value|      Unit|Non-dim. value|
++------------------------------------------------------------------------------+
+|        Ref. Viscosity|     1.716e-05|             1|   N.s/m^2|     1.716e-05|
+|      Sutherland Temp.|        273.15|             1|         K|        273.15|
+|     Sutherland Const.|         110.4|             1|         K|         110.4|
++------------------------------------------------------------------------------+
+|        Prandtl (Lam.)|             -|             -|         -|          0.72|
+|       Prandtl (Turb.)|             -|             -|         -|           0.9|
++------------------------------------------------------------------------------+
+|          Gas Constant|       287.058|             1|  N.m/kg.K|       287.058|
+|      Spec. Heat Ratio|             -|             -|         -|           1.4|
++------------------------------------------------------------------------------+
+-- Initial and free-stream conditions:
++------------------------------------------------------------------------------+
+|                  Name|    Dim. value|    Ref. value|      Unit|Non-dim. value|
++------------------------------------------------------------------------------+
+|       Static Pressure|       27339.7|             1|        Pa|       27339.7|
+|               Density|      0.439608|             1|    kg/m^3|      0.439608|
+|           Temperature|        216.65|             1|         K|        216.65|
+|          Total Energy|        177725|             1|   m^2/s^2|        177725|
+|            Velocity-X|        210.12|             1|       m/s|        210.12|
+|            Velocity-Y|      -3.56861|             1|       m/s|      -3.56861|
+|    Velocity Magnitude|        210.15|             1|       m/s|        210.15|
++------------------------------------------------------------------------------+
+|             Viscosity|   1.42155e-05|             1|   N.s/m^2|   1.42155e-05|
+|          Conductivity|             -|             1|   W/m^2.K|             -|
+|     Turb. Kin. Energy|       165.612|             1|   m^2/s^2|       165.612|
+|     Spec. Dissipation|        512149|             1|       1/s|        512149|
++------------------------------------------------------------------------------+
+|           Mach Number|             -|             -|         -|        0.7122|
+|       Reynolds Number|             -|             -|         -|   6.49882e+06|
++------------------------------------------------------------------------------+
+All ranks use edge coloring.
+Among the ranks that use edge coloring,
+         the minimum efficiency is 0.911594,
+         the maximum number of colors is 5,
+         the minimum edge color group size is 512.
+Initialize Jacobian structure (Navier-Stokes). MG level: 0.
+Initialize Jacobian structure (SST model).
+
+------------------- Numerics Preprocessing ( Zone 0 ) -------------------
+
+----------------- Integration Preprocessing ( Zone 0 ) ------------------
+
+------------------- Iteration Preprocessing ( Zone 0 ) ------------------
+Euler/Navier-Stokes/RANS fluid iteration.
+
+------------------------------ Begin Solver -----------------------------
+
+Simulation Run using the Single-zone Driver
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|           0|   -0.740242|    4.734337|    0.122791|    0.008963|
+|          50|   -2.822693|    2.565259|    0.101324|    0.019033|
+|         100|   -2.804555|    2.578073|    0.106557|    0.011073|
+|         150|   -3.019764|    2.362721|    0.110096|    0.005118|
+|         200|   -3.029254|    2.353529|    0.109439|    0.004968|
+|         250|   -3.031531|    2.350776|    0.109784|    0.004795|
+|         300|   -3.039802|    2.342260|    0.109424|    0.004195|
+|         350|   -3.044097|    2.337083|    0.109442|    0.003706|
+|         400|   -3.040983|    2.339926|    0.109624|    0.003602|
+|         450|   -3.033216|    2.348262|    0.109332|    0.003769|
+|         500|   -3.036274|    2.345168|    0.109049|    0.004169|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|         550|   -3.040791|    2.340749|    0.109356|    0.005240|
+|         600|   -3.031765|    2.349957|    0.108684|    0.005809|
+|         650|   -3.018935|    2.362627|    0.108279|    0.006412|
+|         700|   -3.040061|    2.341630|    0.108093|    0.007445|
+|         750|   -3.034636|    2.347105|    0.107331|    0.007895|
+|         800|   -3.017505|    2.363905|    0.106885|    0.008529|
+|         850|   -3.029475|    2.351206|    0.106562|    0.009264|
+|         900|   -3.039791|    2.340883|    0.105846|    0.009486|
+|         950|   -3.027549|    2.352844|    0.105325|    0.009736|
+|        1000|   -3.020310|    2.359623|    0.105080|    0.010406|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|        1050|   -3.019838|    2.360500|    0.104582|    0.010753|
+|        1100|   -3.013868|    2.366190|    0.104201|    0.011174|
+|        1150|   -3.029816|    2.349548|    0.104186|    0.011792|
+|        1200|   -3.039196|    2.340530|    0.103828|    0.011811|
+|        1250|   -3.017464|    2.363419|    0.103754|    0.012134|
+|        1300|   -3.026217|    2.355018|    0.103535|    0.012498|
+|        1350|   -3.035930|    2.346207|    0.103094|    0.012656|
+|        1400|   -3.026799|    2.354943|    0.103044|    0.012815|
+|        1450|   -3.029806|    2.351546|    0.103199|    0.013023|
+|        1500|   -3.027778|    2.353999|    0.102569|    0.012784|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|        1550|   -3.035226|    2.345828|    0.102731|    0.012998|
+|        1600|   -3.020715|    2.360305|    0.102710|    0.013132|
+|        1650|   -3.027828|    2.353668|    0.102298|    0.012844|
+|        1700|   -3.036011|    2.345688|    0.102612|    0.013311|
+|        1750|   -3.038013|    2.343569|    0.102568|    0.013197|
+|        1800|   -3.024390|    2.357211|    0.102459|    0.012944|
+|        1850|   -3.027305|    2.354414|    0.103053|    0.013205|
+|        1900|   -3.027658|    2.354206|    0.103229|    0.013101|
+|        1950|   -3.018299|    2.363177|    0.103193|    0.012700|
+|        2000|   -3.034898|    2.346121|    0.103833|    0.012743|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|        2050|   -3.040766|    2.341054|    0.103802|    0.012339|
+|        2100|   -3.018976|    2.362366|    0.103978|    0.011902|
+|        2150|   -3.028294|    2.353082|    0.104471|    0.011882|
+|        2200|   -3.024124|    2.357771|    0.104472|    0.011580|
+|        2250|   -3.026248|    2.355289|    0.104648|    0.011317|
+|        2300|   -3.027765|    2.353744|    0.105141|    0.011368|
+|        2350|   -3.040123|    2.340948|    0.105022|    0.010760|
+|        2400|   -3.029786|    2.352229|    0.105780|    0.010941|
+|        2450|   -3.023032|    2.358576|    0.106114|    0.010694|
+|        2500|   -3.032301|    2.349376|    0.106116|    0.010242|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|        2550|   -3.012498|    2.369373|    0.106668|    0.010160|
+|        2600|   -3.032406|    2.348647|    0.107012|    0.009897|
+|        2650|   -3.023745|    2.357828|    0.107184|    0.009602|
+|        2700|   -3.034131|    2.346759|    0.107482|    0.009518|
+|        2750|   -3.039658|    2.341378|    0.107893|    0.009483|
+|        2800|   -3.026480|    2.355367|    0.107760|    0.009005|
+|        2850|   -3.042582|    2.339073|    0.108401|    0.009225|
+|        2900|   -3.021307|    2.360157|    0.108271|    0.009021|
+|        2950|   -3.022725|    2.358721|    0.108381|    0.008729|
+|        3000|   -3.030427|    2.351137|    0.108931|    0.009065|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|        3050|   -3.028122|    2.353031|    0.108945|    0.008850|
+|        3100|   -3.023967|    2.357717|    0.108798|    0.008598|
+|        3150|   -3.039451|    2.341698|    0.109220|    0.008738|
+|        3200|   -3.037501|    2.344108|    0.109352|    0.008550|
+|        3250|   -3.018242|    2.363203|    0.109133|    0.008369|
+|        3300|   -3.037131|    2.343791|    0.109473|    0.008576|
+|        3350|   -3.030217|    2.351077|    0.109280|    0.008614|
+|        3400|   -3.023487|    2.357241|    0.109124|    0.008373|
+|        3450|   -3.028441|    2.352947|    0.109251|    0.008767|
+|        3500|   -3.036650|    2.345151|    0.108960|    0.008591|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|        3550|   -3.035356|    2.345907|    0.108811|    0.008579|
+|        3600|   -3.024398|    2.356712|    0.109007|    0.009060|
+|        3650|   -3.031160|    2.350143|    0.108472|    0.008760|
+|        3700|   -3.017363|    2.363956|    0.108432|    0.008769|
+|        3750|   -3.033931|    2.347058|    0.108402|    0.009104|
+|        3800|   -3.039030|    2.342554|    0.107981|    0.008998|
+|        3850|   -3.027653|    2.353180|    0.107801|    0.009118|
+|        3900|   -3.033601|    2.347789|    0.107791|    0.009421|
+|        3950|   -3.025543|    2.355898|    0.107172|    0.009132|
+|        4000|   -3.021787|    2.359482|    0.107031|    0.009434|
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
++----------------------------------------------------------------+
+|  Inner_Iter|    rms[Rho]|   rms[RhoE]|          CL|          CD|
++----------------------------------------------------------------+
+|        4050|   -3.019120|    2.361943|    0.106882|    0.009619|
+|        4100|   -3.034769|    2.346461|    0.106348|    0.009476|
+|        4150|   -3.026793|    2.355051|    0.106351|    0.009828|
+|        4200|   -3.018340|    2.362953|    0.106123|    0.009950|
+|        4250|   -3.025728|    2.355899|    0.105638|    0.009788|
+|        4300|   -3.028224|    2.352732|    0.105613|    0.010198|
+|        4350|   -3.032219|    2.348775|    0.105225|    0.010218|
+|        4400|   -3.012185|    2.369152|    0.104917|    0.010251|
+|        4450|   -3.033528|    2.347087|    0.104767|    0.010494|
+|        4499|   -3.030816|    2.351100|    0.104433|    0.010595|
+
+----------------------------- Solver Exit -------------------------------
+
+Maximum number of iterations reached (ITER = 4500) before convergence.
++-----------------------------------------------------------------------+
+|      Convergence Field     |     Value    |   Criterion  |  Converged |
++-----------------------------------------------------------------------+
+|                  Cauchy[CD]|   0.000729844|       < 5e-07|          No|
++-----------------------------------------------------------------------+
+-------------------------------------------------------------------------
++-----------------------------------------------------------------------+
+|        File Writing Summary       |              Filename             |
++-----------------------------------------------------------------------+
+|SU2 binary restart                 |restart_sc20412_v2_M0p7122.dat     |
+|CSV file                           |surface_sc20412_v2_M0p7122.csv     |
++-----------------------------------------------------------------------+
+
+--------------------------- Finalizing Solver ---------------------------
+Deleted CNumerics container.
+Deleted CIntegration container.
+Deleted CSolver container.
+Deleted CIteration container.
+Deleted CInterface container.
+Deleted CGeometry container.
+Deleted CFreeFormDefBox class.
+Deleted CSurfaceMovement class.
+Deleted CVolumetricMovement class.
+Deleted CConfig container.
+Deleted nInst container.
+Deleted COutput class.
+-------------------------------------------------------------------------
+
+------------------------- Exit Success (SU2_CFD) ------------------------
+

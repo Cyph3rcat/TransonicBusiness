@@ -1,0 +1,69 @@
+//==== Wing v3 — NACA 64-209 fallback candidate, correct Korn-equation sweep ====//
+// NOT the primary pick -- SC(2)-0410 won decisively per SU2 RANS CFD (see
+// wing_v3_sc0410.vspscript, config.md B.5/B.5.1, doubts.md #7/#8/#12). This
+// model exists purely as an honest fallback/comparison reference.
+//
+// Supersedes archive/wing_v2_naca64209.vsp3, which used 0 deg sweep from the
+// since-superseded aerosandbox transonic-corrected NeuralFoil screen. That
+// screen and B.5's original hand Korn-equation calc landed on swapped answers
+// for BOTH candidates' sweep requirement -- see doubts.md #12. Real CFD
+// (SU2, this project, 2026-08-04) sided with the original Korn-equation
+// figures, not the aerosandbox ones, so this model reverts to B.5's original:
+//
+// SWEEP = 21.4 deg -- Korn equation (config.md B.5 table), kappa_A=0.87
+//   (conventional NACA, not supercritical), t/c=8.98%, C_li=0.248.
+//   NOT re-verified by CFD (SC(2)-0410 already won at 0 deg unswept in the
+//   SU2 comparison, so there was no need to also CFD-verify NACA 64-209 at
+//   its own required sweep) -- kept ASSUMPTION-grade for that reason.
+//
+// TAPER = 0.35, TWIST = 0 deg -- same B.1 base placeholders as the SC(2)-0410
+//   model, not independently tuned for this candidate (it's a fallback
+//   reference, not a design under active development).
+//
+// S = 193.7 ft^2, AR = 8.9, b = 41.5323 ft, root/tip chord identical to the
+//   SC(2)-0410 model (S/AR/taper unchanged -- only sweep and airfoil differ).
+//
+// Airfoil: NACA 64-209, file-based from airfoils/dat_clean/naca64209_selig.dat.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 21.4 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 5.0 );
+    SetParmVal( wid, "Twist", "XSec_1", 0.0 );
+    Update();
+
+    //==== Airfoil: NACA 64-209, file-based, root + tip ====//
+    string af_file = "../airfoils/dat_clean/naca64209_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    string xsec0 = GetXSec( xsec_surf, 0 );
+    string xsec1 = GetXSec( xsec_surf, 1 );
+    ReadFileAirfoil( xsec0, af_file );
+    ReadFileAirfoil( xsec1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "=== NACA 64-209 fallback reference (21.4 deg sweep, Korn eq) ===" );
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+
+    string fname = "wing_v3_naca64209.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

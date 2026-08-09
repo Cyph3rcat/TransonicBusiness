@@ -1,0 +1,8 @@
+{
+  "stage": "stage1_wing_winglet",
+  "solver": "EULER",
+  "status": "done",
+  "total_mach_points": 8,
+  "sweep_start_time": 1786223646.0767193,
+  "updated": 1786223646.076722
+}

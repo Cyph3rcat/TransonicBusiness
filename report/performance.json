@@ -1,0 +1,69 @@
+{
+  "BFL": 3750.3039554690167,
+  "ground_roll_TO": 1488.5749163594046,
+  "landing_total": 2591.7368790606474,
+  "landing_FAR": 4317.8336405150385,
+  "V_app_kt": 118.21291996174693,
+  "service_ceiling": 61000,
+  "oei_ceiling": 42750,
+  "range_design": 1682.5547794621489,
+  "climb": [
+    {
+      "seg": "25.111 1st seg: gear down, TO flaps, OEI",
+      "req": 0.0,
+      "achieved": 0.11030137634154934,
+      "ok": true
+    },
+    {
+      "seg": "25.121(b) 2nd seg: gear up, TO flaps, OEI",
+      "req": 0.024,
+      "achieved": 0.12724255281213756,
+      "ok": true
+    },
+    {
+      "seg": "25.121(c) final seg: clean, OEI",
+      "req": 0.012,
+      "achieved": 0.14602517704098528,
+      "ok": true
+    },
+    {
+      "seg": "25.121(d) approach: appr flaps, gear up, OEI",
+      "req": 0.021,
+      "achieved": 0.12427512931099868,
+      "ok": true
+    },
+    {
+      "seg": "25.119 landing: landing flaps, gear down, AEO",
+      "req": 0.032,
+      "achieved": 0.31374373133848943,
+      "ok": true
+    }
+  ],
+  "payload_range": [
+    {
+      "point": "A  max payload, MTOW",
+      "payload": 1320.0,
+      "fuel": 3061.5,
+      "TOW": 11660.0,
+      "range": 1675.2339366646925
+    },
+    {
+      "point": "B  max fuel at MTOW",
+      "payload": 1111.9,
+      "fuel": 3269.6,
+      "TOW": 11660.0,
+      "range": 1831.969576023042
+    },
+    {
+      "point": "C  ferry, zero payload",
+      "payload": 0.0,
+      "fuel": 3269.6,
+      "TOW": 10548.1,
+      "range": 1942.6291308881723
+    }
+  ],
+  "n_pos": 3.20803324099723,
+  "V_A_kt": 201.86012050496328,
+  "V_C_kt": 300.0,
+  "V_D_kt": 375.0
+}

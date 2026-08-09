@@ -1,0 +1,27 @@
+// Parasite-drag component buildup at the cruise design point.
+// OpenVSP's ParasiteDrag module implements the same component method the course
+// teaches (Raymer Ch.12 Eq. 12.24: CD0 = sum(Cf_c * FF_c * Q_c * Swet_c)/Sref
+// plus miscellaneous/leakage), with Swet taken from the actual OML rather than
+// from a planform estimate. Cruise: FL410, M0.80, ISA.
+//   FL410 -> 41,000 ft; ISA rho = 5.751e-4 slug/ft^3, T = 389.97 R, a = 968.1 ft/s
+//   M0.80 -> Vinf = 774.5 ft/s
+void main()
+{
+    ReadVSPFile( "final_alpha.vsp3" );
+    Update();
+
+    string pd = "ParasiteDrag";
+    SetAnalysisInputDefaults( pd );
+    array<string> fn = { "cd0_v6_FL410_M080.csv" };
+    SetStringAnalysisInput( pd, "FileName", fn );
+    array<int> gs = { 0 };            SetIntAnalysisInput( pd, "GeomSet", gs );  // 0 = All: bodies AND lifting surfaces
+    array<double> sref = { 193.678 }; SetDoubleAnalysisInput( pd, "Sref", sref );
+    array<int> rf = { 0 };            SetIntAnalysisInput( pd, "RefFlag", rf );  // 0 = manual Sref
+    array<double> alt = { 41000.0 };  SetDoubleAnalysisInput( pd, "Altitude", alt );
+    array<double> mach = { 0.80 };    SetDoubleAnalysisInput( pd, "Mach", mach );
+    array<double> vinf = { 774.5 };   SetDoubleAnalysisInput( pd, "Vinf", vinf );
+    array<int> sub = { 1 };           SetIntAnalysisInput( pd, "ExportSubCompFlag", sub );
+    ExecAnalysis( pd );
+    Print( "PD DONE" );
+    while ( GetNumTotalErrors() > 0 ) { ErrorObj err = PopLastError(); Print( err.GetErrorString() ); }
+}

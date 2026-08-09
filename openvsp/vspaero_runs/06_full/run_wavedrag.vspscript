@@ -1,0 +1,25 @@
+void main()
+{
+    ReadVSPFile( "full_v1.vsp3" );
+    Update();
+    string an = "WaveDrag";
+    SetAnalysisInputDefaults( an );
+    array<double> m = { 1.0 };   SetDoubleAnalysisInput( an, "Mach", m );
+    array<int> ns = { 60 };      SetIntAnalysisInput( an, "NumSlices", ns );
+    array<int> nr = { 16 };      SetIntAnalysisInput( an, "NumRotSects", nr );
+    array<int> st = { 0 };       SetIntAnalysisInput( an, "Set", st );   // 0 = All
+    string rid = ExecAnalysis( an );
+    Print( "WaveDrag done" );
+
+    // dump result names/values
+    array<string>@ rnames = GetAllDataNames( rid );
+    for ( int i = 0; i < int(rnames.size()); i++ )
+    {
+        Print( "Result: " + rnames[i] );
+    }
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

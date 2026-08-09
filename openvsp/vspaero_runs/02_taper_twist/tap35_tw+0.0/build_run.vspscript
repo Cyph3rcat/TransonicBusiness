@@ -1,0 +1,56 @@
+// AUTO-GENERATED taper/twist variant: tap35_tw+0.0
+void main()
+{
+    string wid = AddGeom( "WING", "" );
+    SetGeomName( wid, "MainWing" );
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.418 );
+    SetParmVal( wid, "Sweep", "XSec_1", 13.8 );
+    SetParmVal( wid, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 3.0 );
+    SetParmVal( wid, "Twist", "XSec_1", 0.0 );
+    SetParmVal( wid, "Twist_Location", "XSec_1", 0.25 );
+    SetParmVal( wid, "SectTess_U", "XSec_1", 30 );
+    SetParmVal( wid, "Tess_W", "Shape", 41 );
+    Update();
+
+    string af_file = "../../../../airfoils/dat_clean/sc20412_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    ReadFileAirfoil( GetXSec( xsec_surf, 0 ), af_file );
+    ReadFileAirfoil( GetXSec( xsec_surf, 1 ), af_file );
+    Update();
+
+    Print( "TotalArea: " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    WriteVSPFile( "tap35_tw+0.0.vsp3", SET_ALL );
+
+    string cg = "VSPAEROComputeGeometry";
+    SetAnalysisInputDefaults( cg );
+    ExecAnalysis( cg );
+
+    string an = "VSPAEROSweep";
+    SetAnalysisInputDefaults( an );
+    array<double> sref = { 193.678 };   SetDoubleAnalysisInput( an, "Sref", sref );
+    array<double> bref = { 41.5324 };   SetDoubleAnalysisInput( an, "bref", bref );
+    array<double> cref = { 5.0236 };  SetDoubleAnalysisInput( an, "cref", cref );
+    array<double> xcg  = { 3.8682 };   SetDoubleAnalysisInput( an, "Xcg", xcg );
+    array<double> a0   = { 0.0 };    SetDoubleAnalysisInput( an, "AlphaStart", a0 );
+    array<double> a1   = { 10.0 };   SetDoubleAnalysisInput( an, "AlphaEnd", a1 );
+    array<int>    na   = { 6 };      SetIntAnalysisInput( an, "AlphaNpts", na );
+    array<double> m0   = { 0.30 };   SetDoubleAnalysisInput( an, "MachStart", m0 );
+    array<int>    nm   = { 1 };      SetIntAnalysisInput( an, "MachNpts", nm );
+    array<double> re   = { 8000000.0 }; SetDoubleAnalysisInput( an, "ReCref", re );
+    array<int>    ncpu = { 6 };      SetIntAnalysisInput( an, "NCPU", ncpu );
+    array<int>    wni  = { 5 };      SetIntAnalysisInput( an, "WakeNumIter", wni );
+    ExecAnalysis( an );
+    Print( "DONE tap35_tw+0.0" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

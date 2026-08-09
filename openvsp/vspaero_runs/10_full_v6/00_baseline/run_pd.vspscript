@@ -1,0 +1,19 @@
+void main()
+{
+    ReadVSPFile( "00_baseline.vsp3" );
+    Update();
+    string pd = "ParasiteDrag";
+    SetAnalysisInputDefaults( pd );
+    array<string> fn = { "cd0_v5equiv_FL410_M080.csv" };
+    SetStringAnalysisInput( pd, "FileName", fn );
+    array<int> gs = { 0 };            SetIntAnalysisInput( pd, "GeomSet", gs );
+    array<double> sref = { 193.678 }; SetDoubleAnalysisInput( pd, "Sref", sref );
+    array<int> rf = { 0 };            SetIntAnalysisInput( pd, "RefFlag", rf );
+    array<double> alt = { 41000.0 };  SetDoubleAnalysisInput( pd, "Altitude", alt );
+    array<double> mach = { 0.80 };    SetDoubleAnalysisInput( pd, "Mach", mach );
+    array<double> vinf = { 774.5 };   SetDoubleAnalysisInput( pd, "Vinf", vinf );
+    array<int> sub = { 1 };           SetIntAnalysisInput( pd, "ExportSubCompFlag", sub );
+    ExecAnalysis( pd );
+    Print( "PD DONE" );
+    while ( GetNumTotalErrors() > 0 ) { ErrorObj err = PopLastError(); Print( err.GetErrorString() ); }
+}

@@ -1,0 +1,40 @@
+// Alpha sweep, same refs/Mach/Re/wake iters as 08_full_v4/run_aero.vspscript,
+// but Xcg = 19.90 (the Class-I MTOW CG from weights_cg.py, 27.6% MAC) instead
+// of the retired 22.87 quarter-MAC placeholder.
+void main()
+{
+    ReadVSPFile( "full_v5.vsp3" );
+    Update();
+
+    string cg = "VSPAEROComputeGeometry";
+    SetAnalysisInputDefaults( cg );
+    array<int> gset = { 3 };  SetIntAnalysisInput( cg, "GeomSet", gset );
+    array<int> tset = { 4 };  SetIntAnalysisInput( cg, "ThinGeomSet", tset );
+    ExecAnalysis( cg );
+
+    string an = "VSPAEROSweep";
+    SetAnalysisInputDefaults( an );
+    SetIntAnalysisInput( an, "GeomSet", gset );
+    SetIntAnalysisInput( an, "ThinGeomSet", tset );
+    array<double> sref = { 193.678 };   SetDoubleAnalysisInput( an, "Sref", sref );
+    array<double> bref = { 41.5324 };   SetDoubleAnalysisInput( an, "bref", bref );
+    array<double> cref = { 5.0236 };    SetDoubleAnalysisInput( an, "cref", cref );
+    array<double> xcg  = { 19.90 };     SetDoubleAnalysisInput( an, "Xcg", xcg );
+    array<double> zcg  = { -1.0 };      SetDoubleAnalysisInput( an, "Zcg", zcg );
+    array<double> a0   = { 0.0 };       SetDoubleAnalysisInput( an, "AlphaStart", a0 );
+    array<double> a1   = { 8.0 };       SetDoubleAnalysisInput( an, "AlphaEnd", a1 );
+    array<int>    na   = { 5 };         SetIntAnalysisInput( an, "AlphaNpts", na );
+    array<double> m0   = { 0.30 };      SetDoubleAnalysisInput( an, "MachStart", m0 );
+    array<int>    nm   = { 1 };         SetIntAnalysisInput( an, "MachNpts", nm );
+    array<double> re   = { 8000000.0 }; SetDoubleAnalysisInput( an, "ReCref", re );
+    array<int>    ncpu = { 6 };         SetIntAnalysisInput( an, "NCPU", ncpu );
+    array<int>    wni  = { 5 };         SetIntAnalysisInput( an, "WakeNumIter", wni );
+    ExecAnalysis( an );
+    Print( "Sweep done" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

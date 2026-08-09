@@ -1,0 +1,77 @@
+//==== Wing v4 — NASA SC(2)-0414, sweep via Prandtl-Glauert estimate ONLY (2026-08-04) ====//
+// Companion to wing_v4_sc20412.vspscript -- see that file's header for the
+// full SC(2)-0410 retirement / fuel-volume rationale and the Korn-retirement
+// rationale, both identical for this candidate.
+//
+// S = 193.7 ft^2, AR = 8.9, b (full span) = 41.5323 ft -- unchanged.
+//
+// SWEEP = 31.2 deg -- ASSUMPTION, NOT GROUNDED like SC(2)-0412's. SC(2)-0414
+//   did NOT get a CFD Mach sweep this pass (time/scope decision, see
+//   airfoils/su2_screen/README.md) -- this sweep comes ONLY from the
+//   Prandtl-Glauert + critical-Cp method (airfoils/critical_mach_pg.py):
+//   M_crit_PG = 0.6845, Lambda25 = arccos(0.6845/0.80) = 31.17 deg.
+//   For SC(2)-0412, the equivalent PG estimate (30.1 deg) turned out to
+//   understate the real CFD M_crit-based sweep (39.6 deg) and overstate the
+//   CFD M_dd-based sweep the project actually adopted (27.1 deg) -- so this
+//   31.2 deg figure for SC(2)-0414 should be treated as a rough bracket, not
+//   a trustworthy final number, until/unless a real CFD sweep is run for it.
+//
+// TAPER = 0.35 -- unchanged PLACEHOLDER (doubts.md #6).
+//
+// TWIST (washout) = -1.1 deg -- GROUNDED (Schrenk's approximation), but
+//   IDENTICAL to SC(2)-0412's value by mathematical construction, not because
+//   the two candidates are actually aerodynamically equivalent at the tip --
+//   see wing_v4_sc20412.vspscript's header and config.md B.1 for why.
+//
+// DIHEDRAL = 4 deg -- ASSUMPTION, Raymer Table 4.2 swept low-wing bracket
+//   (3-7 deg). Picked lower than SC(2)-0412's 5 deg since this candidate's
+//   (PG-estimated) sweep is higher, contributing more "free" effective
+//   dihedral -- qualitative judgment, no validated numeric k coupling exists.
+//
+// Airfoil: NASA SC(2)-0414 (t/c=14.00%), file-based from
+//   airfoils/dat_clean/sc20414_selig.dat.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    //==== Drive the single section directly off span + root/tip chord ====//
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 31.2 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 4.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -1.1 );
+    Update();
+
+    //==== Airfoil: NASA SC(2)-0414, file-based, root + tip ====//
+    string af_file = "../airfoils/dat_clean/sc20414_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    string xsec0 = GetXSec( xsec_surf, 0 );
+    string xsec1 = GetXSec( xsec_surf, 1 );
+    ReadFileAirfoil( xsec0, af_file );
+    ReadFileAirfoil( xsec1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "=== SC(2)-0414, 31.2 deg sweep (Prandtl-Glauert estimate ONLY, not CFD-verified) ===" );
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+    Print( "TotalChord/MAC (target ~5.02): " + GetParmVal( wid, "TotalChord", "WingGeom" ) );
+
+    string fname = "wing_v4_sc20414.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

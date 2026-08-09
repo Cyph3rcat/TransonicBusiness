@@ -1,0 +1,18 @@
+{
+  "Re": 7300000.0,
+  "cl_target": 0.248,
+  "candidates": {
+    "NASA SC(2)-0412": {
+      "t/c (%)": 12.0,
+      "alpha @ Cl_target (deg)": -0.299,
+      "Cpmin_0 (incompressible)": -0.5861,
+      "M_crit_PG": 0.6922
+    },
+    "NASA SC(2)-0414": {
+      "t/c (%)": 14.0,
+      "alpha @ Cl_target (deg)": -0.576,
+      "Cpmin_0 (incompressible)": -0.6161,
+      "M_crit_PG": 0.6845
+    }
+  }
+}

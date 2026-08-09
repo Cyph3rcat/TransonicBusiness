@@ -1,0 +1,26 @@
+//==== Query actual LE/TE coordinates of wing_v1 to diagnose orientation ====//
+void main()
+{
+    ReadVSPFile( "wing_v1.vsp3" );
+
+    array<string> geoms = FindGeoms();
+    string wid = geoms[0];
+
+    int surf_indx = 0;
+
+    vec3d root_le = CompPnt01( wid, surf_indx, 0.0, 0.5 );
+    vec3d root_te = CompPnt01( wid, surf_indx, 0.0, 0.0 );
+    vec3d tip_le  = CompPnt01( wid, surf_indx, 1.0, 0.5 );
+    vec3d tip_te  = CompPnt01( wid, surf_indx, 1.0, 0.0 );
+
+    Print( "Root LE: x=" + root_le.x() + " y=" + root_le.y() + " z=" + root_le.z() );
+    Print( "Root TE: x=" + root_te.x() + " y=" + root_te.y() + " z=" + root_te.z() );
+    Print( "Tip  LE: x=" + tip_le.x() + " y=" + tip_le.y() + " z=" + tip_le.z() );
+    Print( "Tip  TE: x=" + tip_te.x() + " y=" + tip_te.y() + " z=" + tip_te.z() );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

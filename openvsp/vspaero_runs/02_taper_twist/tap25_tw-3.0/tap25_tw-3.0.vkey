@@ -1,0 +1,13 @@
+# VSPGEOM v3 Tag Key File
+C:/Users/cyphe/Downloads/airplane/openvsp/vspaero_runs/02_taper_twist/tap25_tw-3.0/tap25_tw-3.0.vspgeom
+2
+
+# part#,geom#,surf#,gname,gid,thick,plate,copy#,geomcopy#
+1,0,0,MainWing_C,NXYQYQNEXE,0,3,1,1
+2,0,1,MainWing_C,NXYQYQNEXE,0,3,2,1
+
+2
+
+# tag#,part#,ssname1,ssname2,...,ssid1,ssid2,...
+1,1
+2,2

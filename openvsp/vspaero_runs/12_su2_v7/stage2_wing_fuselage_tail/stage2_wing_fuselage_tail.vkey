@@ -1,0 +1,23 @@
+# VSPGEOM v3 Tag Key File
+C:/Users/cyphe/downloads/airplane/openvsp/vspaero_runs/12_su2_v7/stage2_wing_fuselage_tail/stage2_wing_fuselage_tail.vspgeom
+7
+
+# part#,geom#,surf#,gname,gid,thick,plate,copy#,geomcopy#
+1,1,0,Fuselage_S,QCUFNQQIDH,1,0,1,2
+2,4,0,BellyFairing_S,ACKSTQRAQI,1,0,1,5
+3,2,0,MainWing_S,PMCFWEVWIJ,1,0,1,3
+4,0,0,VertTail_S,RQJCGVUPII,1,0,1,1
+5,3,0,HorizTail_S,BCBLKVPTGD,1,0,1,4
+6,5,lane,SymPlane,,0,0,0,6
+7,5,ield,FarField,,0,0,0,6
+
+7
+
+# tag#,part#,ssname1,ssname2,...,ssid1,ssid2,...
+1,1
+2,2
+3,3
+4,4
+5,5
+6,6
+7,7

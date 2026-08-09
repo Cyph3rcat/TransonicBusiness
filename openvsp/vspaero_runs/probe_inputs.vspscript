@@ -1,0 +1,23 @@
+// Probe: list VSPAERO analysis inputs available in this OpenVSP build
+void main()
+{
+    Print( "=== Analyses ===" );
+    int n = GetNumAnalysis();
+    array<string>@ names = ListAnalysis();
+    for ( int i = 0; i < int(names.size()); i++ )
+    {
+        Print( names[i] );
+    }
+    Print( "" );
+    Print( "=== VSPAEROSweep inputs ===" );
+    PrintAnalysisInputs( "VSPAEROSweep" );
+    Print( "" );
+    Print( "=== VSPAEROComputeGeometry inputs ===" );
+    PrintAnalysisInputs( "VSPAEROComputeGeometry" );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

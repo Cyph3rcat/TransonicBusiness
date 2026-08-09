@@ -1,0 +1,19 @@
+void main()
+{
+    ReadVSPFile( "full_v4.vsp3" );
+    Update();
+    string an = "WaveDrag";
+    SetAnalysisInputDefaults( an );
+    array<double> m = { 1.0 };   SetDoubleAnalysisInput( an, "Mach", m );
+    array<int> ns = { 60 };      SetIntAnalysisInput( an, "NumSlices", ns );
+    array<int> nr = { 16 };      SetIntAnalysisInput( an, "NumRotSects", nr );
+    array<int> st = { 0 };       SetIntAnalysisInput( an, "Set", st );
+    string rid = ExecAnalysis( an );
+    WriteResultsCSVFile( rid, "wavedrag_full_v4.csv" );
+    Print( "Wrote wavedrag_full_v4.csv" );
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

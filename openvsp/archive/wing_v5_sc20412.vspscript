@@ -1,0 +1,129 @@
+//==== Wing v5 — NASA SC(2)-0412, sweep retracted to v3 SU2 result (2026-08-04) ====//
+// Supersedes wing_v4_sc20412.vspscript. v4's SWEEP=27.1deg was built on the
+// adaptive Mach sweep now RETRACTED (config.md B.5.2 / airfoils/su2_screen/):
+// that run's residuals were pinned in a limit cycle from iteration 500 onward
+// (JST-vs-ROE/limiter diagnosis), so its CD(M) samples (272/52/233/155/44
+// counts across M=0.59-0.65, where a converged solve gives ~85-125) were
+// snapshots of an oscillation, not measurements. A ROE/limiter warm-start
+// (v2) attempt made it worse (CL decayed 0.244->0.033 across the sweep from
+// solution-history contamination). v3 fixed both: JST central scheme
+// (removes the limiter-driven limit cycle), independent cold starts per run
+// (no history contamination), 3-AoA-per-Mach brackets interpolated to the
+// true design C_L=0.248 (not a fixed-AoA proxy), and CD/CL reported as
+// windowed mean+/-std over the last 1500 of 5000 iterations (residuals
+// reached -3.8 to -5.2, vs -3.0 to -3.1 for the retracted run). Full
+// data/config/extraction: airfoils/su2_screen/mach_sweep_sc20412_v3/,
+// extract_v3.py, plot_v3.py.
+//
+// Independent cross-checks the v3 result now agrees with (v4's 27.1 deg did
+// not have any): Rezaei/Sobhani/Nejat (arXiv:1809.06975, AGARD-validated RANS
+// on this exact section) find first upper-surface shock at M=0.78; NASA
+// TP-2969's thickness-vs-Mdd rule of thumb extrapolates to ~0.80 at this t/c
+// and C_L; Korn's equation (kappa_A=0.95) gives M_dd=0.805.
+//
+// S = 193.7 ft^2, AR = 8.9, b (full span) = sqrt(AR*S) = 41.5323 ft --
+// UNCHANGED from v4 (taper/AR/S not revisited this pass, doubts.md #6 first
+// half still open).
+//
+// SWEEP = 13.8 deg -- GROUNDED (SU2 v3). Lambda25 = arccos(M_dd/M_c),
+//   M_c=0.80. M_dd=0.7768 from the "Boeing criterion" (dCd/dM>=0.10 on the
+//   constant-CL curve, same named criterion as v4 used) -> Lambda25=13.84,
+//   rounded 13.8. Cross-check: the delta-CD-over-baseline-plus-20-counts
+//   definition gives M_dd=0.7842 -> Lambda25=11.40 deg -- the two standard
+//   Mdd definitions agree within 2.4 deg, which is the actual basis for
+//   calling this defensible (see extract_v3.py, config.md B.5.2).
+//
+// TAPER = 0.35 -- ASSUMPTION (upgraded from PLACEHOLDER 2026-08-04: this was
+//   confirmed as a deliberate business-jet-benchmark pick within the
+//   ordinary 0.3-0.4 range for this class -- HondaJet/Phenom-precedented --
+//   not an unexamined stand-in. Still not independently re-optimized for
+//   this specific AR/sweep/OTWEM-pylon combination -- see doubts.md #6.
+//
+// DIHEDRAL = 3.0 deg -- ASSUMPTION (numeric sweep coupling used for the
+//   first time this pass, replacing the qualitative in-bracket pick v4 used).
+//   Formula: Gamma_geo = Gamma_baseline - Lambda25/k.
+//     Gamma_baseline = 6 deg (midpoint of Raymer's UNSWEPT low-wing bracket,
+//       5-7deg -- the same reference this project used for the earlier 0deg-
+//       sweep SC(2)-0410 design, i.e. what geometric dihedral alone would
+//       need to supply with zero sweep contribution).
+//     k = 5 (deg sweep per deg of sweep-equivalent effective dihedral) --
+//       literature rules of thumb range 3:1 to 10:1 (no single agreed value);
+//       5:1 taken as the middle-of-range point estimate. Sensitivity:
+//       k=3 -> 1.4 deg, k=5 -> 3.2 deg (adopted, rounded), k=10 -> 4.6 deg.
+//   All three sit inside or near the requested 2-5 deg band; 3.2->3.0 deg
+//   chosen as the round middle value. Tag stays ASSUMPTION -- the k=5
+//   coefficient is a citable heuristic, not derived for this airframe.
+//
+// TWIST (washout) = -3.0 deg -- ASSUMPTION (replaces v4's -1.1 deg GROUNDED
+//   Schrenk figure). The Schrenk single-tip-station formula was found
+//   mathematically degenerate (doubts.md #16: returns -1.1 deg regardless of
+//   taper/sweep/airfoil, since both ratios it uses collapse to fixed values
+//   at the literal tip) -- retired per explicit instruction rather than
+//   patched, in favor of an industry-benchmark pick, same treatment as taper.
+//   Typical washout for GA/business-class wings is ~2-4 deg (Cessna 172 ~3
+//   deg unswept baseline, commonly cited). Swept wings need MORE washout than
+//   an equivalent unswept wing at the same taper, not less -- sweepback adds
+//   to (does not substitute for) taper's own outboard-loading/tip-stall
+//   tendency, the opposite direction from the dihedral coupling above. -3.0
+//   deg sits at the upper end of the typical band for that reason. Genuinely
+//   PLACEHOLDER-adjacent (no computation specific to this planform) -- a real
+//   fix per doubts.md #16 would evaluate Schrenk at y=0.90-0.95s instead of
+//   the literal tip, or add a sweep-corrected lift-curve slope; not done here.
+//
+// Airfoil: NASA SC(2)-0412 (t/c=12.00%), file-based from
+//   airfoils/dat_clean/sc20412_selig.dat -- unchanged from v4.
+//
+// OpenVSP has no units; all lengths are raw ft-valued numbers so reported
+// Area/Span come out numerically equal to the config.md values in ft^2/ft.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    //==== Drive the single section directly off span + root/tip chord ====//
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 13.8 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 3.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -3.0 );
+    Update();
+
+    //==== Airfoil: NASA SC(2)-0412, file-based, root + tip ====//
+    // NOTE (2026-08-04 fix): v4 used "../airfoils/..." here, which resolves to
+    // openvsp/airfoils/... (doesn't exist) when run from openvsp/archive/, one
+    // level short of the repo root. That failure was silent in v4's own
+    // verification because TotalArea/TotalSpan/TotalChord depend only on the
+    // planform driver group, not on which airfoil section loaded -- so v4's
+    // "both built and verified" check never actually exercised the airfoil
+    // load path. Corrected to "../../airfoils/..." here.
+    string af_file = "../../airfoils/dat_clean/sc20412_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    string xsec0 = GetXSec( xsec_surf, 0 );
+    string xsec1 = GetXSec( xsec_surf, 1 );
+    ReadFileAirfoil( xsec0, af_file );
+    ReadFileAirfoil( xsec1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "=== SC(2)-0412, 13.8 deg sweep (SU2 v3 Mdd-verified, JST/cold-start/const-CL) ===" );
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+    Print( "TotalChord/MAC (target ~5.02): " + GetParmVal( wid, "TotalChord", "WingGeom" ) );
+
+    string fname = "wing_v5_sc20412.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

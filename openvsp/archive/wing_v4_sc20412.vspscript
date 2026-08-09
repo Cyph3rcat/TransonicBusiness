@@ -1,0 +1,95 @@
+//==== Wing v4 — NASA SC(2)-0412, sweep via real SU2 M_dd (2026-08-04) ====//
+// Supersedes wing_v3_sc0410.vspscript (archived). SC(2)-0410 (9.97% t/c) was
+// retired: its spar box only held ~26-43% of the required ~65 ft^3 wing fuel
+// volume (doubts.md #15) vs. the HondaJet Elite precedent (wing-primary fuel,
+// same OTWEM layout). Replaced with two thicker, still-real NASA SC(2) family
+// members -- SC(2)-0412 (this file, 12% t/c) and SC(2)-0414 (14% t/c,
+// wing_v4_sc20414.vspscript) -- accepting more sweep as the tradeoff.
+//
+// Korn's equation is retired for sweep sizing (already self-contradictory
+// across methods for the SC(2)-0410 screen -- see config.md B.5.1). Replaced
+// by simple sweep theory, Lambda25 = arccos(M_crit_or_Mdd / M_c), driven by a
+// real SU2 Mach sweep instead of a regression formula. See
+// airfoils/su2_screen/README.md's "SC(2)-0412 adaptive Mach sweep" section
+// and airfoils/su2_screen/mach_sweep_sc20412/ for the full run data.
+//
+// S = 193.7 ft^2, AR = 8.9, b (full span) = sqrt(AR*S) = 41.5323 ft --
+// unchanged from wing_v3 (taper/AR/S not revisited this pass, doubts.md #6
+// still open).
+//
+// SWEEP = 27.1 deg -- GROUNDED (SU2 CFD). Adaptive Mach sweep (7 points,
+//   M=0.5922-0.7722, fixed AoA per point) found M_dd (Cd hockey-stick, 2
+//   consecutive intervals with dCd/dM >= 0.10, the "Boeing criterion") = 0.712.
+//   Lambda25 = arccos(0.712/0.80) = 27.1 deg. (The same sweep run's stricter
+//   M_crit-Cp-crossing figure, 0.617, would give 39.6 deg -- user chose the
+//   M_dd basis as the more practically meaningful number for sizing sweep;
+//   see README.md for the full comparison table and rationale.)
+//
+// TAPER = 0.35 -- unchanged PLACEHOLDER, not revisited this pass (doubts.md #6).
+//
+// TWIST (washout) = -1.1 deg -- GROUNDED (Schrenk's approximation, same method
+//   as wing_v3). NOTE: this single-tip-station Schrenk calc is mathematically
+//   degenerate -- at y=s the Schrenk-chord/actual-chord ratio is always 0.5 and
+//   the ideal-elliptical local Cl is always 0, regardless of taper, sweep, or
+//   airfoil, so it returns the SAME -1.1 deg for both SC(2)-0412 and SC(2)-0414
+//   irrespective of their different sweep. Flagged, not silently trusted --
+//   see openvsp/schrenk_washout.py and config.md B.1.
+//
+// DIHEDRAL = 5 deg -- ASSUMPTION, Raymer Table 4.2 swept low-wing bracket
+//   (3-7 deg, not the unswept 5-7 deg bracket wing_v3 wrongly used once sweep
+//   was zeroed -- reverted now that real sweep is back). No validated k exists
+//   for Gamma_eff = Gamma_geo + k*Lambda25, so no numeric coupling formula is
+//   used -- picked qualitatively within the bracket (higher than the
+//   more-swept SC(2)-0414's 4 deg, since more sweep contributes more "free"
+//   effective dihedral).
+//
+// Airfoil: NASA SC(2)-0412 (t/c=12.00%), file-based from
+//   airfoils/dat_clean/sc20412_selig.dat.
+//
+// OpenVSP has no units; all lengths are raw ft-valued numbers so reported
+// Area/Span come out numerically equal to the config.md values in ft^2/ft.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    //==== Drive the single section directly off span + root/tip chord ====//
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9086 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4180 );
+    SetParmVal( wid, "Sweep", "XSec_1", 27.1 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 5.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -1.1 );
+    Update();
+
+    //==== Airfoil: NASA SC(2)-0412, file-based, root + tip ====//
+    string af_file = "../airfoils/dat_clean/sc20412_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    string xsec0 = GetXSec( xsec_surf, 0 );
+    string xsec1 = GetXSec( xsec_surf, 1 );
+    ReadFileAirfoil( xsec0, af_file );
+    ReadFileAirfoil( xsec1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "=== SC(2)-0412, 27.1 deg sweep (SU2 M_dd-verified) ===" );
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+    Print( "TotalChord/MAC (target ~5.02): " + GetParmVal( wid, "TotalChord", "WingGeom" ) );
+
+    string fname = "wing_v4_sc20412.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

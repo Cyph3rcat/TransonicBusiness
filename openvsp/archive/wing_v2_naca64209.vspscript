@@ -1,0 +1,83 @@
+//==== Wing v2 — NACA 64-209, transonic-corrected sweep ====//
+// S = 193.7 ft^2 (config.md B.2, GROUNDED formula pass)
+// AR = 8.9 (config.md B.1, ASSUMPTION -- HondaJet/Phenom average)
+// b (full span) = sqrt(AR*S) = 41.5323 ft
+//
+// SWEEP = 0.0 deg -- confirmed, not just carried over. B.5's incompressible
+//   Korn screen (2026-08-02) said this candidate needed ~21 deg sweep for
+//   M_dd=0.80. airfoils/evaluate_transonic.py's Mach-corrected rerun
+//   (2026-08-03, aerosandbox get_aero_from_neuralfoil(mach=0.80)) found the
+//   OPPOSITE: unswept M_dd=0.803 at Re=7.5e6 (this project's canonical FL410
+//   cruise Re, doubts.md #2) -- i.e. this section already clears M0.80 with
+//   NO sweep. Sweep-needed = arccos(min(mdd/mach,1)) = arccos(1) = 0 deg.
+//   Also gives cruise L/D=48.66 at this Cl vs SC(2)-0410's 9.73 under the same
+//   method (see wing_v2_sc0410.vspscript, results_transonic_screen.json). This
+//   reverses config.md B.1/B.5's recommendation but that reversal is NOT YET
+//   written back into config.md/doubts.md -- flagged as a new open item.
+//   Building this variant per explicit instruction to model both candidates
+//   side by side; treat neither as the final locked pick yet.
+//
+// TAPER = 0.35 -- unchanged from config.md B.1 placeholder. At ~0 deg sweep
+//   there's no sweep-driven reason (see the sc0410 script's DeYoung/Harper
+//   note) to move off the existing placeholder. Still PLACEHOLDER-grade
+//   pending the Step-14 elliptical-lift-distribution check (doubts.md #6).
+//
+// WASHOUT = -2.0 deg (tip incidence relative to root) -- ASSUMPTION. Baseline
+//   washout for an effectively unswept wing at this AR (~8.9), well within
+//   ordinary business-jet range, included mainly for root-first stall
+//   progression margin. Not derived from this airframe's actual spanwise
+//   loading -- same Step-14 caveat as above.
+//
+// DIHEDRAL = 5 deg -- unchanged from config.md B.1 PLACEHOLDER (Raymer Table
+//   4.2 midpoint for low-wing subsonic swept). Not re-derived here.
+//
+// Airfoil: NACA 64-209 (t/c=8.98%), file-based from
+//   airfoils/dat_clean/naca64209_selig.dat (clean single-loop Selig coords).
+//
+// OpenVSP has no units; all lengths are raw ft-valued numbers so reported
+// Area/Span come out numerically equal to the config.md values in ft^2/ft.
+
+void main()
+{
+    //==== Add Wing ====//
+    string wid = AddGeom( "WING", "" );
+
+    //==== Drive the single section directly off span + root/tip chord ====//
+    SetDriverGroup( wid, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+
+    SetParmVal( wid, "Span", "XSec_1", 20.7662 );
+    SetParmVal( wid, "Root_Chord", "XSec_1", 6.9094 );
+    SetParmVal( wid, "Tip_Chord", "XSec_1", 2.4183 );
+    SetParmVal( wid, "Sweep", "XSec_1", 0.0 );
+    SetParmVal( wid, "Dihedral", "XSec_1", 5.0 );
+    SetParmVal( wid, "Twist", "XSec_1", -2.0 );
+    Update();
+
+    //==== Airfoil: NACA 64-209, file-based, root + tip ====//
+    string af_file = "../airfoils/dat_clean/naca64209_selig.dat";
+    string xsec_surf = GetXSecSurf( wid, 0 );
+    ChangeXSecShape( xsec_surf, 0, XS_FILE_AIRFOIL );
+    ChangeXSecShape( xsec_surf, 1, XS_FILE_AIRFOIL );
+    string xsec0 = GetXSec( xsec_surf, 0 );
+    string xsec1 = GetXSec( xsec_surf, 1 );
+    ReadFileAirfoil( xsec0, af_file );
+    ReadFileAirfoil( xsec1, af_file );
+    Update();
+
+    //==== Report whole-wing (both sides) summary values for verification ====//
+    Print( "=== NACA 64-209 variant (0 deg sweep) ===" );
+    Print( "TotalArea (target 193.7): " + GetParmVal( wid, "TotalArea", "WingGeom" ) );
+    Print( "TotalSpan (target ~41.53): " + GetParmVal( wid, "TotalSpan", "WingGeom" ) );
+    Print( "TotalChord/MAC: " + GetParmVal( wid, "TotalChord", "WingGeom" ) );
+
+    string fname = "wing_v2_naca64209.vsp3";
+    WriteVSPFile( fname, SET_ALL );
+    Print( "Wrote " + fname );
+
+    //==== Check For API Errors ====//
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

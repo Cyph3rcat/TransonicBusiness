@@ -1,0 +1,28 @@
+# --- Third-party program installs (not this project's work; download separately) ---
+/OpenVSP-3.51.2-win64-Python3.13/
+/flow5_v7.57_win64/
+
+# --- Compiled report (regenerate from report/figs/*.py + report/*.py) ---
+/report/prelim_design_report.html
+/report/tight_emdash.txt
+
+# --- Personal working notes / scratch (not part of the published record) ---
+/thoughts/
+/airfoils/fixes for plane.txt
+/airfoils/- run our current wing through vsp.txt
+
+# --- Reference literature (not original work; kept locally only, not redistributed) ---
+*.pdf
+/lectureslides/
+/refs/lectureslides/img/
+
+# --- Claude Code artifacts ---
+CLAUDE.md
+.claude/
+
+# --- OpenVSP / Python / OS junk ---
+__pycache__/
+*.pyc
+.vsptime
+.DS_Store
+Thumbs.db

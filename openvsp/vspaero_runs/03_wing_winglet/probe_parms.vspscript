@@ -1,0 +1,21 @@
+void main()
+{
+    ReadVSPFile( "wing_v6_winglet.vsp3" );
+    array<string>@ geoms = FindGeoms();
+    string wid = geoms[0];
+    array<string>@ parms = GetGeomParmIDs( wid );
+    for ( int i = 0; i < int(parms.size()); i++ )
+    {
+        string grp = GetParmGroupName( parms[i] );
+        string nm = GetParmName( parms[i] );
+        if ( grp == "WingGeom" || nm.findFirst( "Driver" ) >= 0 || nm.findFirst( "Total" ) >= 0 )
+        {
+            Print( grp + " / " + nm + " = " + GetParmVal( parms[i] ) );
+        }
+    }
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}
